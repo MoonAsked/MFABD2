@@ -138,6 +138,95 @@
             151
         ]
     },
+    "SeasonEvent_MiniGame_Quiz_Entry": {
+        "roi": [
+            857,
+            362,
+            146,
+            223
+        ],
+        "expected": [
+            "小活动",
+            "迷你[游遊][戏戲]"
+        ],
+        "post_wait_freezes": {
+            "target": [
+                857,
+                362,
+                146,
+                223
+            ]
+        }
+    },
+    "SeasonEvent_MiniGame_Quiz_GoAction": {
+        "expected": [
+            "^答题",
+            "^問答"
+        ],
+        "post_wait_freezes": {
+            "target": [
+                489,
+                120,
+                338,
+                501
+            ]
+        }
+    },
+    "SeasonEvent_MiniGame_Quiz_SubMenu": {
+        "roi": [
+            467,
+            160,
+            122,
+            58
+        ],
+        "expected": [
+            "能力测试",
+            "能力測驗"
+        ]
+    },
+    "SeasonEvent_MiniGame_Quiz_Enter": {
+        "roi": [
+            706,
+            176,
+            99,
+            391
+        ],
+        "expected": [
+            "开始答题",
+            "解[题題]"
+        ]
+    },
+    "SeasonEvent_MiniGame_Quiz_Swipe": {
+        "custom_action_param": {
+            "detect_roi": [
+                484,
+                238,
+                96,
+                296
+            ],
+            "on_changed": "next",
+            "on_unchanged": "error",
+            "proxy_node": "Agt_Proxy_Blank",
+            "proxy_override": {
+                "action": "Swipe",
+                "begin": [
+                    530,
+                    500
+                ],
+                "duration": 500,
+                "end": [
+                    530,
+                    235
+                ],
+                "end_hold": 800,
+                "post_delay": 0,
+                "pre_delay": 0
+            },
+            "settle_delay": 500,
+            "threshold": 2.0,
+            "unchanged_streak": 3
+        }
+    },
     "Event_NoHaveAPBackEventIndex": {
         "target": [
             105,
@@ -429,7 +518,7 @@
             30
         ]
     },
-    "Event_Goin_MiniGame": {
+    "Event_MiniGame_Run_Goin": {
         "desc": "全猜的",
         "expected": [
             "小活动",
