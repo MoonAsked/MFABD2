@@ -33,7 +33,8 @@
         "next": [
             "[JumpBack]Event_Battle_Hub",
             "[JumpBack]Event_Mamono_Hub",
-            "[JumpBack]Event_MiniGame_Hub",
+            "[JumpBack]Event_MiniGame_Run_Hub",
+            "[JumpBack]SeasonEvent_MiniGame_Quiz_HUB",
             "[JumpBack]SeasonEvent_ReMamono_Hub",
             "Global_ToHomePage_Enter",
             "Global_ToHomePage"
@@ -88,17 +89,17 @@
             "[JumpBack]Global_BackPageHub_Once"
         ]
     },
-    "Event_MiniGame_Hub": {
-        "desc": "跑酷小游戏快速刷取.放在最后,会附带回到主页。enabled是interface的抓手,判据在Event_MiniGame_Switch。timeout必写——next只剩这一项,闸不命中时不写就会空转到默认20秒才退栈",
+    "Event_MiniGame_Run_Hub": {
+        "desc": "跑酷小游戏快速刷取,结束后回到主页。enabled是interface的抓手,判据在Event_MiniGame_Run_Switch。timeout必写——next只剩这一项,闸不命中时不写就会空转到默认20秒才退栈",
         "enabled": true,
         "max_hit": 1,
         "timeout": 1,
         "next": [
-            "Event_MiniGame_Switch"
+            "Event_MiniGame_Run_Switch"
         ]
     },
-    "Event_MiniGame_Switch": {
-        "desc": "战场探索存档闸:本游戏日已刷完则不命中,上级next就此耗尽,退栈换下一个子模块",
+    "Event_MiniGame_Run_Switch": {
+        "desc": "跑酷小游戏存档闸:沿用Event_MiniGame旧存档键,与问答独立。本游戏日已刷完则不命中,退栈换下一个子模块",
         "recognition": "Custom",
         "custom_recognition": "CheckCoolDown",
         "custom_recognition_param": {
@@ -108,7 +109,7 @@
         "pre_delay": 0,
         "post_delay": 0,
         "next": [
-            "SeasonEvent_MiniGame_Start",
+            "SeasonEvent_MiniGame_Run_Start",
             "[JumpBack]Global_WaitingForLoading",
             "[JumpBack]Event_GoinEvent",
             "[JumpBack]Global_BackPageHub_Once"
@@ -127,12 +128,16 @@
     "SeasonEvent_Main_Return": {
         "desc": "确认回到赛季卡带页面",
         "recognition": "Or",
-        "any_of": ["Event_Event_Main"],
+        "any_of": [
+            "Event_Event_Main"
+        ],
         "focus": "EM.赛季活动进入确认."
     },
     "SeasonEvent_Battle_Start": {
         "recognition": "And",
-        "all_of": ["Event_Event_Main"],
+        "all_of": [
+            "Event_Event_Main"
+        ],
         "next": [
             "Event_EnterBattle_Auto",
             "SeasonEvent_EnterlBattle_Normal",
@@ -149,7 +154,9 @@
     "SeasonEvent_Battle_Int_Anchor": {
         "desc": "初始化锚点Auto_Battle",
         "max_hit": 1,
-        "anchor": {"Auto_Battle": "SeasonEvent_EnterlBattle_Challenge"}
+        "anchor": {
+            "Auto_Battle": "SeasonEvent_EnterlBattle_Challenge"
+        }
     },
     "SeasonEvent_EnterlBattle_Normal": {
         "desc": "点击普通战斗",
@@ -177,7 +184,9 @@
             "SeasonEvent_Battle_Recon_AP_Empty",
             "[JumpBack]Global_WaitingForLoading"
         ],
-        "on_error": ["Event_Battle_IsMenu"],
+        "on_error": [
+            "Event_Battle_IsMenu"
+        ],
         "focus": "EM.活动.难度:普通"
     },
     "SeasonEvent_EnterlBattle_Challenge": {
@@ -206,7 +215,9 @@
             "SeasonEvent_Battle_Recon_AP_Empty",
             "[JumpBack]Global_WaitingForLoading"
         ],
-        "on_error": ["Event_Battle_IsMenu"],
+        "on_error": [
+            "Event_Battle_IsMenu"
+        ],
         "focus": "EM.活动.难度:挑战"
     },
     "SeasonEvent_Battle_Recon_AP_Full": {
@@ -222,7 +233,9 @@
             "(\\d+)\\s*[/:：|\\-~]\\s*\\1(?!\\d)"
         ],
         "only_rec": true,
-        "next": ["Event_Battle_IsMenu"]
+        "next": [
+            "Event_Battle_IsMenu"
+        ]
     },
     "SeasonEvent_Battle_Recon_AP_Empty": {
         "desc": "判断AP为:空",
@@ -265,7 +278,9 @@
     },
     "Event_Battle_BattleStatus_Enable": {
         "recognition": "And",
-        "all_of": ["Anc_Ocr_Enable_Clr"],
+        "all_of": [
+            "Anc_Ocr_Enable_Clr"
+        ],
         "action": "Click",
         "post_delay": 1000,
         "next": [
@@ -281,8 +296,12 @@
             183,
             119
         ],
-        "expected": ["快速战斗"],
-        "next": ["SeasonEvent_FreeAP_Verdict"]
+        "expected": [
+            "快速战斗"
+        ],
+        "next": [
+            "SeasonEvent_FreeAP_Verdict"
+        ]
     },
     "Event_FastNormalBattle": {
         "desc": "识别并点击子菜单快速战斗",
@@ -308,9 +327,13 @@
     "Event_Battle_BattleStatus_Unable_Except": {
         "desc": "当前无快速战斗,需要获取手动战斗区域,然后判定颜色",
         "recognition": "Or",
-        "any_of": ["SeasonEvent_NormlBattle"],
+        "any_of": [
+            "SeasonEvent_NormlBattle"
+        ],
         "anchor": "Ocr_clr",
-        "next": ["Event_Battle_BattleStatus_Unable"]
+        "next": [
+            "Event_Battle_BattleStatus_Unable"
+        ]
     },
     "SeasonEvent_NormlBattle": {
         "desc": "无自动战斗时,常规战斗会出现在ROI中被识别.注意普通战斗点击无AP确认框,直接进入战斗",
@@ -333,13 +356,19 @@
     },
     "SeasonEvent_NormlBattle_Enable": {
         "recognition": "And",
-        "all_of": ["Anc_Ocr_Enable_Clr"],
-        "next": ["Event_Battle_TabAutoBattle"],
+        "all_of": [
+            "Anc_Ocr_Enable_Clr"
+        ],
+        "next": [
+            "Event_Battle_TabAutoBattle"
+        ],
         "focus": "E.常规战斗-可用"
     },
     "SeasonEvent_NormlBattle_Unable": {
         "recognition": "And",
-        "all_of": ["Anc_Ocr_Unable_Clr"],
+        "all_of": [
+            "Anc_Ocr_Unable_Clr"
+        ],
         "next": [
             "SeasonEvent_BackedToSubMain",
             "[JumpBack]Global_BackPageHub_Once"
@@ -360,7 +389,9 @@
             "挑战",
             "血界中死战"
         ],
-        "anchor": {"Auto_Battle": "SeasonEvent_EnterlBattle_Normal"},
+        "anchor": {
+            "Auto_Battle": "SeasonEvent_EnterlBattle_Normal"
+        },
         "next": [
             "SeasonEvent_Battle_Start",
             "[JumpBack]Global_BackPageHub_Once"
@@ -382,7 +413,9 @@
             "修炼",
             "血染的结界"
         ],
-        "anchor": {"Auto_Battle": "SeasonEvent_EnterlBattle_Challenge"},
+        "anchor": {
+            "Auto_Battle": "SeasonEvent_EnterlBattle_Challenge"
+        },
         "next": [
             "SeasonEvent_Battle_Start",
             "[JumpBack]Global_BackPageHub_Once"
@@ -391,7 +424,9 @@
     },
     "SeasonEvent_BackedToSubMain": {
         "recognition": "And",
-        "all_of": ["Event_Event_Main"]
+        "all_of": [
+            "Event_Event_Main"
+        ]
     },
     "SeasonEvent_FreeAP_Verdict": {
         "desc": "确保免费AP选中。现场为，如果无AP会无法点开二级确认菜单。似乎不用进一步适配滑块无法变黄情况？",
@@ -429,7 +464,9 @@
     "SeasonEvent_FreeAP_Verdict_Ispass": {
         "desc": "确保免费AP选中。现场为，如果无AP会无法点开二级确认菜单。似乎不用进一步适配滑块无法变黄情况？",
         "recognition": "And",
-        "all_of": ["Anc_SliderSwitch_YewOn_Clr"],
+        "all_of": [
+            "Anc_SliderSwitch_YewOn_Clr"
+        ],
         "next": [
             "Event_NormalBattleMAX"
         ],
@@ -437,7 +474,9 @@
     },
     "SeasonEvent_FreeAP_Verdict_NOpass": {
         "recognition": "And",
-        "all_of": ["Anc_SliderSwitch_GryOff_Clr"],
+        "all_of": [
+            "Anc_SliderSwitch_GryOff_Clr"
+        ],
         "next": [
             "SeasonEvent_Main_Return",
             "[JumpBack]SeasonEvent_FreeAP_Err",
@@ -455,9 +494,356 @@
             60,
             89
         ],
-        "expected": ["取消"],
+        "expected": [
+            "取消"
+        ],
         "action": "Click",
         "post_delay": 2000
+    },
+    "SeasonEvent_MiniGame_Quiz_HUB": {
+        "desc": "问答小游戏入口,enabled由interface小游戏选项控制;当天完成时快速退栈",
+        "enabled": true,
+        "max_hit": 1,
+        "timeout": 1,
+        "next": [
+            "SeasonEvent_MiniGame_Quiz_CheckDaily"
+        ]
+    },
+    "SeasonEvent_MiniGame_Quiz_CheckDaily": {
+        "desc": "问答小游戏每日存档检查,与跑酷独立;强制重跑时由interface改为直接命中",
+        "recognition": "Custom",
+        "custom_recognition": "CheckCoolDown",
+        "custom_recognition_param": {
+            "card_name": "Event_MiniGame_Quiz",
+            "cycle_type": "g_daily"
+        },
+        "pre_delay": 0,
+        "post_delay": 0,
+        "next": [
+            "SeasonEvent_MiniGame_Quiz_PreEntry",
+            "[JumpBack]Global_ToHomePage"
+        ]
+    },
+    "SeasonEvent_MiniGame_Quiz_PreEntry": {
+        "recognition": "And",
+        "all_of": [
+            "Rec_HomePage_GA_Ocr",
+            "Rec_HomePage_GA_Clr"
+        ],
+        "timeout": 3000,
+        "next": [
+            "SeasonEvent_MiniGame_Quiz_Entry"
+        ]
+    },
+    "SeasonEvent_MiniGame_Quiz_Entry": {
+        "desc": "问答小活动的入口在主页面",
+        "recognition": "OCR",
+        "roi": [
+            916,
+            347,
+            145,
+            222
+        ],
+        "expected": "小活动",
+        "action": "Click",
+        "target_offset": [
+            0,
+            -10,
+            0,
+            0
+        ],
+        "post_wait_freezes": {
+            "time": 1000,
+            "target": [
+                916,
+                347,
+                145,
+                222
+            ]
+        },
+        "next": [
+            "SeasonEvent_MiniGame_Quiz_GoAction",
+            "SeasonEvent_MiniGame_Quiz_Entry",
+            "[JumpBack]Global_WaitingForLoading"
+        ]
+    },
+    "SeasonEvent_MiniGame_Quiz_GoAction": {
+        "recognition": "OCR",
+        "roi": [
+            116,
+            87,
+            1062,
+            582
+        ],
+        "expected": "^答题",
+        "action": "Click",
+        "post_wait_freezes": {
+            "time": 800,
+            "target": [
+                489,
+                120,
+                338,
+                473
+            ]
+        },
+        "next": [
+            "SeasonEvent_MiniGame_Quiz_SubMenu",
+            "SeasonEvent_MiniGame_Quiz_GoAction"
+        ]
+    },
+    "SeasonEvent_MiniGame_Quiz_SubMenu": {
+        "recognition": "OCR",
+        "roi": [
+            442,
+            125,
+            101,
+            57
+        ],
+        "expected": ["能力测试"],
+        "pre_delay": 0,
+        "post_delay": 0,
+        "next": [
+            "[JumpBack]SeasonEvent_MiniGame_Quiz_Enter",
+            "SeasonEvent_MiniGame_Quiz_Swipe"
+        ]
+    },
+    "SeasonEvent_MiniGame_Quiz_Enter": {
+        "desc": "开始答题",
+        "recognition": "OCR",
+        "roi": [
+            706,
+            176,
+            135,
+            391
+        ],
+        "expected": "开始答题",
+        "order_by": "Vertical",
+        "action": "Click",
+        "post_delay": 3000,
+        "next": [
+            "[JumpBack]Global_WaitingForLoading",
+            "SeasonEvent_MiniGame_Quiz_SandBox",
+            "SeasonEvent_MiniGame_Quiz_Enter"
+        ]
+    },
+    "SeasonEvent_MiniGame_Quiz_Swipe": {
+        "desc": "上滑答题列表,画面变化走next;连续3次不变走on_error记录当天完成并回主页。此出口也接收SmartAction的截图或操作失败",
+        "action": "Custom",
+        "custom_action": "SmartAction",
+        "custom_action_param": {
+            "proxy_node": "Agt_Proxy_Blank",
+            "proxy_override": {
+                "action": "Swipe",
+                "begin": [
+                    530,
+                    530
+                ],
+                "end": [
+                    530,
+                    230
+                ],
+                "duration": 500,
+                "end_hold": 800,
+                "pre_delay": 0,
+                "post_delay": 0
+            },
+            "detect_roi": [
+                446,
+                182,
+                95,
+                374
+            ],
+            "threshold": 2.0,
+            "settle_delay": 500,
+            "on_changed": "next",
+            "on_unchanged": "error",
+            "unchanged_streak": 3
+        },
+        "timeout": 5000,
+        "next": [
+            "SeasonEvent_MiniGame_Quiz_SubMenu"
+        ],
+        "on_error": [
+            "SeasonEvent_MiniGame_Quiz_End",
+            "Global_Null"
+        ]
+    },
+    "SeasonEvent_MiniGame_Quiz_End": {
+        "desc": "问答列表滑动结束出口,记录问答当天完成后回主页;不修改跑酷完成记录",
+        "pre_delay": 0,
+        "action": "Custom",
+        "custom_action": "MarkComplete",
+        "custom_action_param": {
+            "card_name": "Event_MiniGame_Quiz",
+            "cycle_type": "g_daily"
+        },
+        "post_delay": 0,
+        "next": [
+            "Global_ToHomePage"
+        ],
+        "focus": "EM.活动.问答小游戏完成,已记录"
+    },
+    "SeasonEvent_MiniGame_Quiz_SandBox": {
+        "desc": "出题界面只有这个特征",
+        "recognition": "Custom",
+        "custom_recognition": "HSVShapeMatching",
+        "custom_recognition_param": {
+            "target_node": "Agt_<MiniGame_Quiz_SandBox>_Tpl",
+            "hsv_ranges": [
+                {
+                    "lower": [
+                        0,
+                        0,
+                        200
+                    ],
+                    "upper": [
+                        180,
+                        30,
+                        255
+                    ]
+                }
+            ],
+            "edge_assist": true,
+            "edge_threshold": 15
+        },
+        "pre_delay": 500,
+        "action": "Click",
+        "target": [
+            1,
+            405,
+            5,
+            5
+        ],
+        "repeat": 6,
+        "repeat_delay": 150,
+        "post_delay": 500,
+        "next": [
+            "SeasonEvent_MiniGame_Quiz_Reward",
+            "[JumpBack]SeasonEvent_MiniGame_Quiz_SkipTalk",
+            "[JumpBack]SeasonEvent_MiniGame_Quiz_Switch1",
+            "[JumpBack]SeasonEvent_MiniGame_Quiz_Switch2"
+        ]
+    },
+    "Agt_<MiniGame_Quiz_SandBox>_Tpl": {
+        "recognition": "TemplateMatch",
+        "roi": [
+            1,
+            1,
+            231,
+            124
+        ],
+        "template": [
+            "Binary/BackBut_Bin.png"
+        ]
+    },
+    "SeasonEvent_MiniGame_Quiz_Switch1": {
+        "recognition": "And",
+        "all_of": [
+            {
+                "sub_name": "OCR",
+                "recognition": "Or",
+                "any_of": [
+                    {
+                        "sub_name": "QuizCandidateOCR",
+                        "recognition": "OCR",
+                        "roi": [
+                            457,
+                            195,
+                            369,
+                            340
+                        ],
+                        "expected": "^.{2,12}$",
+                        "order_by": "Horizontal"
+                    }
+                ]
+            },
+            "Sub_Ocr_Enable_Clr"
+        ],
+        "action": "Click",
+        "post_delay": 1000
+    },
+    "SeasonEvent_MiniGame_Quiz_Switch2": {
+        "recognition": "And",
+        "all_of": [
+            {
+                "sub_name": "OCR",
+                "recognition": "Or",
+                "any_of": [
+                    {
+                        "sub_name": "QuizCandidateOCR",
+                        "recognition": "OCR",
+                        "roi": [
+                            457,
+                            195,
+                            369,
+                            340
+                        ],
+                        "expected": "^.{2,12}$",
+                        "order_by": "Horizontal",
+                        "index": -1
+                    }
+                ]
+            },
+            "Sub_Ocr_Enable_Clr"
+        ],
+        "action": "Click",
+        "post_delay": 1000
+    },
+    "SeasonEvent_MiniGame_Quiz_SkipTalk": {
+        "recognition": "And",
+        "all_of": [
+            "SeasonEvent_MiniGame_Quiz_SandBox",
+            {
+                "recognition": "Custom",
+                "custom_recognition": "NotRecognition",
+                "custom_recognition_param": {
+                    "node": "Agt_<Quiz_SkipTalk>_OCR"
+                }
+            }
+        ],
+        "pre_delay": 500,
+        "action": "Click",
+        "target": [
+            1,
+            405,
+            5,
+            5
+        ],
+        "repeat": 6,
+        "repeat_delay": 150,
+        "post_delay": 500
+    },
+    "Agt_<Quiz_SkipTalk>_OCR": {
+        "recognition": "OCR",
+        "roi": [
+            457,
+            195,
+            369,
+            340
+        ],
+        "expected": "^.{2,12}$"
+    },
+    "SeasonEvent_MiniGame_Quiz_Reward": {
+        "desc": "获得奖励",
+        "recognition": "Or",
+        "any_of": [
+            "Rec_Reward_Ocr"
+        ],
+        "action": "Click",
+        "post_wait_freezes": {
+            "time": 500,
+            "target": [
+                496,
+                279,
+                299,
+                165
+            ],
+            "timeout": 1000
+        },
+        "next": [
+            "SeasonEvent_MiniGame_Quiz_Reward",
+            "Global_Null"
+        ]
     },
     "Event_NoHaveAP": {
         "desc": "点击后跳二级菜单,AP不足.(这是必要的)",
@@ -569,7 +955,9 @@
     "Event_NormalBattleBack": {
         "desc": "奖励返回",
         "recognition": "Or",
-        "any_of": ["Rec_Reward_Ocr"],
+        "any_of": [
+            "Rec_Reward_Ocr"
+        ],
         "action": "Click",
         "target": [
             1,
@@ -585,7 +973,9 @@
     "Event_NormalBattleIsOver": {
         "desc": "判定，处于一般/挑战 战斗页面，用于流程结束位置判定。动作，空白处点击",
         "recognition": "Or",
-        "any_of": ["Event_Battle_IsMenu"],
+        "any_of": [
+            "Event_Battle_IsMenu"
+        ],
         "action": "Click",
         "target": [
             40,
@@ -601,7 +991,9 @@
     "Event_LeaveEventDub": {
         "desc": "离开活动页，Dub与LeaveEvent相同且不可删除，上一步error与Inf重复next，会出错且不报错",
         "recognition": "Or",
-        "any_of": ["Event_Battle_IsMenu"],
+        "any_of": [
+            "Event_Battle_IsMenu"
+        ],
         "action": "Click",
         "target": [
             120,
@@ -617,7 +1009,9 @@
     "Event_LeaveEvent": {
         "desc": "判断在挑战or普通战斗关卡选择页面",
         "recognition": "Or",
-        "any_of": ["Event_Battle_IsMenu"],
+        "any_of": [
+            "Event_Battle_IsMenu"
+        ],
         "action": "Click",
         "target": [
             120,
@@ -633,14 +1027,18 @@
     "Event_LeaveInterrupt": {
         "desc": "其他页面，返回按钮",
         "recognition": "Or",
-        "any_of": ["Global_BackPageHub_Once"],
+        "any_of": [
+            "Global_BackPageHub_Once"
+        ],
         "action": "Click",
         "post_delay": 3000,
         "focus": "G=1.页面非预期，点击返回按钮"
     },
     "SeasonEvent_Mamono_Start": {
         "recognition": "And",
-        "all_of": ["Event_Event_Main"],
+        "all_of": [
+            "Event_Event_Main"
+        ],
         "next": [
             "Even_MamonoFollowUp_InMamono",
             "SeasonEvent_Mamono_Bypass"
@@ -655,7 +1053,9 @@
             923,
             172
         ],
-        "expected": ["可练习战斗"]
+        "expected": [
+            "可练习战斗"
+        ]
     },
     "Even_MamonoFollowUp_InMamono": {
         "recognition": "OCR",
@@ -722,7 +1122,9 @@
             141,
             30
         ],
-        "expected": ["距离开始还"],
+        "expected": [
+            "距离开始还"
+        ],
         "only_rec": true
     },
     "Rec_<SeasonEvent_MamonoFollow_Practice>_Ocr_02": {
@@ -734,7 +1136,9 @@
             211,
             72
         ],
-        "expected": ["狩猎期间开始解除"]
+        "expected": [
+            "狩猎期间开始解除"
+        ]
     },
     "Even_MamonoFollow_lv1_Ck": {
         "desc": "Lv1的复杂正则匹配",
@@ -795,7 +1199,9 @@
         "any_of": [
             "Rec_Mamono_HP_Hunted_Ocr"
         ],
-        "next": ["Even_MamonoFollowUp_MmnHpUp"],
+        "next": [
+            "Even_MamonoFollowUp_MmnHpUp"
+        ],
         "focus": "E. HP=ab.此Lv魔兽已讨伐完毕..."
     },
     "SeasonEvent_MamonoFollow_HP_NoMeetHunt": {
@@ -806,7 +1212,9 @@
             "Rec_Mamono_HP_NoMeetHunt_Ocr",
             "SeasonEvent_Mamono_HP_Right_Red"
         ],
-        "next": ["SeasonEvent_MamonoFollow_NormalBattle"],
+        "next": [
+            "SeasonEvent_MamonoFollow_NormalBattle"
+        ],
         "focus": "E. HP=Ab.此Lv魔兽尚未讨伐..."
     },
     "Even_MamonoFollowUp_lv1NoMet": {
@@ -836,7 +1244,9 @@
     },
     "Even_MamonoFollowUp_lvdown": {
         "recognition": "And",
-        "all_of": ["Even_MamonoFollowUp_MamonoEnter"],
+        "all_of": [
+            "Even_MamonoFollowUp_MamonoEnter"
+        ],
         "action": "Click",
         "target": [
             851,
@@ -867,7 +1277,9 @@
                     109,
                     49
                 ],
-                "expected": ["快速战斗"]
+                "expected": [
+                    "快速战斗"
+                ]
             },
             "Sub_Ocr_Enable_Clr"
         ],
@@ -896,7 +1308,9 @@
                     109,
                     49
                 ],
-                "expected": ["快速战斗"]
+                "expected": [
+                    "快速战斗"
+                ]
             },
             "Sub_Ocr_Unable_Clr"
         ],
@@ -936,7 +1350,9 @@
     "SeasonEvent_MamonoFollow_NormalBattle_Enable": {
         "desc": "战斗亮色.(待增强:转场等待失效!用的是赛季标题的黑色页面)",
         "recognition": "And",
-        "all_of": ["Anc_Ocr_Enable_Clr"],
+        "all_of": [
+            "Anc_Ocr_Enable_Clr"
+        ],
         "action": "Click",
         "post_delay": 2000,
         "timeout": 40000,
@@ -950,8 +1366,12 @@
     "SeasonEvent_MamonoFollow_NormalBattle_Unable": {
         "desc": "战斗灰色",
         "recognition": "And",
-        "all_of": ["Anc_Ocr_Unable_Clr"],
-        "next": ["SeasonEvent_MamonoFollow_Team_Troubleshoot"],
+        "all_of": [
+            "Anc_Ocr_Unable_Clr"
+        ],
+        "next": [
+            "SeasonEvent_MamonoFollow_Team_Troubleshoot"
+        ],
         "focus": "EM.MF.常规战斗-不可用"
     },
     "SeasonEvent_MamonoFollow_Team_Troubleshoot": {
@@ -964,12 +1384,16 @@
             43
         ],
         "expected": "[//?]",
-        "replace": [[
+        "replace": [
+            [
                 "？",
                 "?"
-            ]],
+            ]
+        ],
         "only_rec": true,
-        "next": ["SeasonEvent_MamonoFollow_Team_Edit"],
+        "next": [
+            "SeasonEvent_MamonoFollow_Team_Edit"
+        ],
         "focus": "E.队伍漏配,尝试拿推荐部署"
     },
     "SeasonEvent_MamonoFollow_Team_Edit": {
@@ -1025,7 +1449,9 @@
     "SeasonEvent_MamonoFollow_Team_End": {
         "desc": "队伍调整结束",
         "recognition": "And",
-        "all_of": ["SeasonEvent_MamonoFollow_NormalBattle"],
+        "all_of": [
+            "SeasonEvent_MamonoFollow_NormalBattle"
+        ],
         "focus": "队伍调整结束"
     },
     "Even_MamonoFollowUp_QuickBattle_ck": {
@@ -1051,7 +1477,9 @@
     "Even_MamonoFollowUp_QuickBattle_Cleared": {
         "desc": "已击杀,领取奖励.",
         "recognition": "And",
-        "all_of": ["Rec_Reward_Ocr"],
+        "all_of": [
+            "Rec_Reward_Ocr"
+        ],
         "action": "Click",
         "target": [
             1,
@@ -1061,7 +1489,9 @@
     },
     "Even_MamonoFollowUp_QuickBattle_PostVerify": {
         "recognition": "And",
-        "all_of": ["Even_MamonoFollowUp_onSubMain"],
+        "all_of": [
+            "Even_MamonoFollowUp_onSubMain"
+        ],
         "next": [
             "SeasonEvent_MamonoFollow_HP_Hunting",
             "[JumpBack]SeasonEvent_MamonoFollow_HP_Hunted",
@@ -1214,7 +1644,9 @@
             276,
             29
         ],
-        "expected": ["(?<![\\d,，.])0\\s*[/:：|\\-~]\\s*[1-9][\\d,，.]*"]
+        "expected": [
+            "(?<![\\d,，.])0\\s*[/:：|\\-~]\\s*[1-9][\\d,，.]*"
+        ]
     },
     "Rec_Mamono_HP_NoMeetHunt_Ocr": {
         "desc": "[识别]血量为全满",
@@ -1259,25 +1691,31 @@
             "SeasonEvent_Mamono_HP_Right_Gray"
         ]
     },
-    "SeasonEvent_MiniGame_Start": {
-        "desc": "小活动入口,先寻找赛季内的'战场探索'.| JB会返回,需要插入中断维持环境,否则可能超时",
+    "SeasonEvent_MiniGame_Run_Start": {
+        "desc": "跑酷小游戏入口,先寻找赛季内的'战场探索'.| JB会返回,需要插入中断维持环境,否则可能超时",
         "recognition": "And",
-        "all_of": ["Event_Event_Main"],
-        "anchor": {"MiniGame_Return": "Event_MiniGame_SubToMain"},
+        "all_of": [
+            "Event_Event_Main"
+        ],
+        "anchor": {
+            "MiniGame_Run_Return": "Event_MiniGame_Run_SubToMain"
+        },
         "next": [
-            "Event_MiniGame",
-            "SeasonEvent_MiniGame_BackToMain",
+            "Event_MiniGame_Run_Entry",
+            "SeasonEvent_MiniGame_Run_BackToMain",
             "[JumpBack]Global_BackPageHub_Once",
             "[JumpBack]Global_WaitingForLoading"
         ]
     },
-    "SeasonEvent_MiniGame_BackToMain": {
-        "desc": "小活动入口,其次返回主界面,查找主页的'小活动'入口",
+    "SeasonEvent_MiniGame_Run_BackToMain": {
+        "desc": "跑酷小游戏入口,其次返回主界面,查找主页的'小活动'入口",
         "recognition": "And",
-        "all_of": ["Event_GoinEvent"],
+        "all_of": [
+            "Event_GoinEvent"
+        ],
         "timeout": 2000,
         "next": [
-            "Event_Goin_MiniGame",
+            "Event_MiniGame_Run_Goin",
             "[JumpBack]Global_WaitingForLoading"
         ],
         "on_error": [
@@ -1285,9 +1723,9 @@
             "Global_Null_Exception",
             "Global_Null_Panic"
         ],
-        "focus": "尝试查找小活动"
+        "focus": "跑酷小游戏-尝试查找主页小活动"
     },
-    "Event_Goin_MiniGame": {
+    "Event_MiniGame_Run_Goin": {
         "recognition": "OCR",
         "roi": [
             901,
@@ -1305,15 +1743,17 @@
             0,
             0
         ],
-        "anchor": {"MiniGame_Return": ""},
+        "anchor": {
+            "MiniGame_Run_Return": ""
+        },
         "post_delay": 2000,
         "next": [
-            "Event_MiniGame"
+            "Event_MiniGame_Run_Entry"
         ],
-        "focus": "发现小活动,进入"
+        "focus": "跑酷小游戏-发现主页小活动,进入"
     },
-    "Event_MiniGame": {
-        "desc": "战场探索",
+    "Event_MiniGame_Run_Entry": {
+        "desc": "跑酷小游戏入口,识别并点击'战场探索'",
         "recognition": "OCR",
         "roi": [
             222,
@@ -1327,12 +1767,13 @@
         "action": "Click",
         "post_delay": 1000,
         "next": [
-            "Event_MiniGame_OCR",
+            "Event_MiniGame_Run_QuickComplete",
             "[JumpBack]Global_WaitingForLoading"
         ],
-        "focus": "EM.活动.小游戏模块启动"
+        "focus": "EM.活动.跑酷小游戏模块启动"
     },
-    "Event_MiniGame_OCR": {
+    "Event_MiniGame_Run_QuickComplete": {
+        "desc": "跑酷小游戏快速完成,识别按钮文字后交由公共颜色节点判断是否可点击",
         "recognition": "OCR",
         "roi": [
             667,
@@ -1346,28 +1787,32 @@
         "anchor": "Ocr_clr",
         "timeout": 5000,
         "next": [
-            "Event_MiniGame_CLR_Enable",
-            "Event_MiniGame_CLR_Unable"
+            "Event_MiniGame_Run_CLR_Enable",
+            "Event_MiniGame_Run_CLR_Unable"
         ],
-        "focus": "快速完成OCR"
+        "focus": "跑酷小游戏-快速完成OCR"
     },
-    "Event_MiniGame_CLR_Enable": {
+    "Event_MiniGame_Run_CLR_Enable": {
         "recognition": "And",
-        "all_of": ["Anc_Ocr_Enable_Clr"],
+        "all_of": [
+            "Anc_Ocr_Enable_Clr"
+        ],
         "action": "Click",
         "post_delay": 2000,
         "next": [
-            "Event_MiniGame_Confirm",
-            "Event_MiniGame_CLR_Enable"
+            "Event_MiniGame_Run_Confirm",
+            "Event_MiniGame_Run_CLR_Enable"
         ],
         "focus": "快速完成-CLR亮色可点击"
     },
-    "Event_MiniGame_CLR_Unable": {
+    "Event_MiniGame_Run_CLR_Unable": {
         "recognition": "And",
-        "all_of": ["Anc_Ocr_Unable_Clr"],
+        "all_of": [
+            "Anc_Ocr_Unable_Clr"
+        ],
         "timeout": 4000,
         "next": [
-            "[Anchor]MiniGame_Return"
+            "[Anchor]MiniGame_Run_Return"
         ],
         "on_error": [
             "Global_ToHomePage",
@@ -1376,15 +1821,15 @@
         ],
         "focus": "快速完成-CLR暗色不可点击"
     },
-    "Event_MiniGame_SubToMain": {
-        "desc": "[锚点单向]极端情况,赛季和主页同时有活动,此处让先进性的赛季流程回到主页,再识别小游戏",
+    "Event_MiniGame_Run_SubToMain": {
+        "desc": "[锚点单向]极端情况,赛季和主页同时有活动,此处让先进行的赛季流程回到主页,再识别跑酷小游戏",
         "next": [
-            "SeasonEvent_MiniGame_BackToMain",
+            "SeasonEvent_MiniGame_Run_BackToMain",
             "[JumpBack]Global_WaitingForLoading",
             "[JumpBack]Global_BackPageHub_Once"
         ]
     },
-    "Event_MiniGame_Confirm": {
+    "Event_MiniGame_Run_Confirm": {
         "desc": "快速战斗-确认",
         "recognition": "OCR",
         "roi": [
@@ -1399,28 +1844,30 @@
         "action": "Click",
         "post_delay": 5000,
         "next": [
-            "Event_MiniGameRewardBack"
+            "Event_MiniGame_Run_RewardBack"
         ]
     },
-    "Event_MiniGameRewardBack": {
+    "Event_MiniGame_Run_RewardBack": {
         "desc": "奖励返回",
         "recognition": "Or",
-        "any_of": ["Rec_Reward_Ocr"],
+        "any_of": [
+            "Rec_Reward_Ocr"
+        ],
         "action": "Click",
         "post_delay": 2000,
         "next": [
-            "Event_MiniGameBack"
+            "Event_MiniGame_Run_Back"
         ]
     },
-    "Event_MiniGameBack": {
+    "Event_MiniGame_Run_Back": {
         "desc": "战场探索-返回",
         "next": [
-            "Event_MiniGame_End"
+            "Event_MiniGame_Run_End"
         ],
-        "focus": "EM.活动.小游戏模块结束"
+        "focus": "EM.活动.跑酷小游戏模块结束"
     },
-    "Event_MiniGame_End": {
-        "desc": "战场探索的正常出口,打完标再走公共复位。Event_MiniGame_CLR_Unable那条(按钮灰着)不在这里打标——按钮不可用未必等于今天刷完了,宁可下次重跑",
+    "Event_MiniGame_Run_End": {
+        "desc": "跑酷小游戏的正常出口,沿用Event_MiniGame旧存档键,打完标再走公共复位。Event_MiniGame_Run_CLR_Unable那条(按钮灰着)不在这里打标——按钮不可用未必等于今天刷完了,宁可下次重跑",
         "pre_delay": 0,
         "action": "Custom",
         "custom_action": "MarkComplete",
@@ -1432,14 +1879,16 @@
         "next": [
             "Global_ToHomePage"
         ],
-        "focus": "EM.活动.战场探索完成,已记录"
+        "focus": "EM.活动.跑酷小游戏完成,已记录"
     },
     "Event_Battle_BattleStatus_Unable": {
         "recognition": "Or",
         "any_of": [
             "Anc_Ocr_Unable_Clr"
         ],
-        "next": ["Event_Battle_TabAutoBattle"],
+        "next": [
+            "Event_Battle_TabAutoBattle"
+        ],
         "focus": "快速战斗不可用"
     },
     "Event_Battle_TabAutoBattle": {
@@ -1453,7 +1902,9 @@
     "Event_Battle_TabAutoBattle_General": {
         "desc": "判断当前战斗:为普通难度.(已移除:已在上方适配Event_Battle_TabAutoBattle_ChangeDifficulty_Back)",
         "recognition": "And",
-        "all_of": ["SeasonEvent_TabTo_Challenge"],
+        "all_of": [
+            "SeasonEvent_TabTo_Challenge"
+        ],
         "next": [
             "Event_Battle_TabAutoBattle_Battle"
         ],
@@ -1462,7 +1913,9 @@
     "Event_Battle_TabAutoBattle_Challenge": {
         "desc": "判断当前战斗:为挑战难度.(移除:尝试切回普通一次.因为在上方已做适配)",
         "recognition": "And",
-        "all_of": ["SeasonEvent_TabTo_Nomarl"],
+        "all_of": [
+            "SeasonEvent_TabTo_Nomarl"
+        ],
         "next": [
             "Event_Battle_TabAutoBattle_Battle_ButChallenge"
         ],
@@ -1471,7 +1924,9 @@
     "Event_Battle_TabAutoBattle_Battle": {
         "desc": "点击手动战斗",
         "recognition": "And",
-        "all_of": ["SeasonEvent_NormlBattle"],
+        "all_of": [
+            "SeasonEvent_NormlBattle"
+        ],
         "action": "Click",
         "post_delay": 2000,
         "next": [
@@ -1485,7 +1940,9 @@
     "Event_Battle_TabAutoBattle_Battle_ButChallenge": {
         "desc": "点击手动战斗。挑战难度增加一个自动战斗识别。免得用户选错起始难度",
         "recognition": "And",
-        "all_of": ["SeasonEvent_NormlBattle"],
+        "all_of": [
+            "SeasonEvent_NormlBattle"
+        ],
         "action": "Click",
         "post_delay": 2000,
         "next": [
@@ -1508,8 +1965,12 @@
     "Event_Battle_TabAutoBattle_ChangeDifficulty_ToMain": {
         "desc": "复用判定在主页面",
         "recognition": "And",
-        "all_of": ["Event_Event_Main"],
-        "next": ["Event_Battle_TabAutoBattle_ChangeDifficulty_TryGeneral"]
+        "all_of": [
+            "Event_Event_Main"
+        ],
+        "next": [
+            "Event_Battle_TabAutoBattle_ChangeDifficulty_TryGeneral"
+        ]
     },
     "Event_Battle_TabAutoBattle_ChangeDifficulty_TryGeneral": {
         "desc": "点击普通战斗",
@@ -1531,7 +1992,9 @@
             0
         ],
         "post_delay": 3000,
-        "next": ["Event_Battle_TabAutoBattle_General"],
+        "next": [
+            "Event_Battle_TabAutoBattle_General"
+        ],
         "focus": "点击普通战斗"
     },
     "Event_Battle_TabAutoBattle_ChangeDifficulty_Back": {
@@ -1546,13 +2009,19 @@
     },
     "Event_Battle_TabAutoBattle_ChangeDifficulty_Back_ToMain": {
         "recognition": "And",
-        "all_of": ["Event_Event_Main"],
-        "next": ["Event_Battle_TabAutoBattle_ChangeDifficulty_ExceptChallenge"]
+        "all_of": [
+            "Event_Event_Main"
+        ],
+        "next": [
+            "Event_Battle_TabAutoBattle_ChangeDifficulty_ExceptChallenge"
+        ]
     },
     "Event_Battle_TabAutoBattle_ChangeDifficulty_ExceptChallenge": {
         "desc": "点击挑战战斗",
         "recognition": "Or",
-        "any_of": ["SeasonEvent_EnterlBattle_Challenge"],
+        "any_of": [
+            "SeasonEvent_EnterlBattle_Challenge"
+        ],
         "action": "Click",
         "target_offset": [
             5,
@@ -1561,13 +2030,17 @@
             0
         ],
         "post_delay": 3000,
-        "next": ["Event_Battle_TabAutoBattle_Challenge"],
+        "next": [
+            "Event_Battle_TabAutoBattle_Challenge"
+        ],
         "focus": "点击挑战战斗"
     },
     "SeasonEvent_ReMamono_Start": {
         "desc": "确认再主页",
         "recognition": "And",
-        "all_of": ["Event_GoinEvent"],
+        "all_of": [
+            "Event_GoinEvent"
+        ],
         "timeout": 2000,
         "next": [
             "SeasonEvent_ReMamono_Enter",
@@ -1582,7 +2055,9 @@
             269,
             235
         ],
-        "expected": ["回归赛季"],
+        "expected": [
+            "回归赛季"
+        ],
         "action": "Click",
         "timeout": 5000,
         "next": [
@@ -1590,6 +2065,8 @@
             "[JumpBack]Global_WaitingForLoading",
             "SeasonEvent_ReMamono_Enter"
         ],
-        "on_error": ["Global_ToHomePage"]
+        "on_error": [
+            "Global_ToHomePage"
+        ]
     }
 }

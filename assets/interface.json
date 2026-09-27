@@ -224,7 +224,7 @@
                 "赛季活动快速战斗难度",
                 "魔兽初始等级"
             ],
-            "description": "自动识别并执行赛季三类活动：<br><b>· 剧情关卡</b>（普通/挑战，共15+15关）：优先尝试快速战斗；未解锁或不满足条件时，退回常规战斗自动刷取。<br><b>· 魔兽补刀</b>：每日快速战斗一次领取参与奖。支持手动配队(推荐)或获取推荐配队；赛季外的回归魔兽同样适用。<br><b>· 小游戏 / 场域活动</b>：需先手动完成通关，脚本负责每日快速战斗。"
+            "description": "自动识别并执行赛季三类活动：<br><b>· 剧情关卡</b>（普通/挑战，共15+15关）：优先尝试快速战斗；未解锁或不满足条件时，退回常规战斗自动刷取。<br><b>· 魔兽补刀</b>：每日快速战斗一次领取参与奖。支持手动配队(推荐)或获取推荐配队；赛季外的回归魔兽同样适用。<br><b>· 小游戏</b>：跑酷需先手动通关，脚本负责快速完成；问答由脚本自动执行。两类分别记录每日完成状态。"
         },
         {
             "name": "[执行]肉鸽塔每日快速战斗",
@@ -661,7 +661,7 @@
             "label": "[手动开关]-强制只跑指定子项",
             "type": "switch",
             "default_case": "No",
-            "description": "<span style=\"color:Crimson\"><b>开启后本任务默认什么都不跑</b>，只执行下面展开的清单里勾选的子项——一项都不勾就等于整个任务空跑。</span><br>本任务里只有<b>战场探索</b>带存档记录（当天刷完自动跳过，勾选后无视记录重刷）；15战与魔兽讨伐的完成态是 AP 耗尽、而 AP 会随时间恢复，回归魔兽与魔兽讨伐共用收尾链无法区分，这三项<b>不做按日跳过</b>，勾选与否只决定跑不跑。",
+            "description": "<span style=\"color:Crimson\"><b>开启后本任务默认什么都不跑</b>，只执行下面展开的清单里勾选的子项——一项都不勾就等于整个任务空跑。</span><br><b>小游戏</b>包含跑酷与问答，两类分别记录每日完成状态，默认当天完成后各自跳过；勾选后两类都无视记录重跑。完成记录按游戏日计（每日 08:00 刷新）。<br>15战与魔兽讨伐的完成态是 AP 耗尽、而 AP 会随时间恢复，回归魔兽与魔兽讨伐共用收尾链无法区分，这三项<b>不做按日跳过</b>，勾选与否只决定跑不跑。",
             "cases": [
                 {
                     "name": "No"
@@ -678,7 +678,10 @@
                         "Event_Mamono_Hub": {
                             "enabled": false
                         },
-                        "Event_MiniGame_Hub": {
+                        "Event_MiniGame_Run_Hub": {
+                            "enabled": false
+                        },
+                        "SeasonEvent_MiniGame_Quiz_HUB": {
                             "enabled": false
                         },
                         "SeasonEvent_ReMamono_Hub": {
@@ -692,7 +695,7 @@
             "label": "手控开关",
             "type": "checkbox",
             "default_case": [],
-            "description": "勾选的子项才执行，未勾选的一律不跑。<br><b>战场探索</b>勾选后额外无视存档记录，当天刷过也会再刷一遍。",
+            "description": "勾选的子项才执行，未勾选的一律不跑。<br><b>小游戏（跑酷 / 问答）</b>勾选后，两类都无视各自的每日完成记录重跑。",
             "cases": [
                 {
                     "name": "剧情15战",
@@ -712,11 +715,18 @@
                 },
                 {
                     "name": "战场探索",
+                    "label": "小游戏（跑酷 / 问答）",
                     "pipeline_override": {
-                        "Event_MiniGame_Hub": {
+                        "Event_MiniGame_Run_Hub": {
                             "enabled": true
                         },
-                        "Event_MiniGame_Switch": {
+                        "Event_MiniGame_Run_Switch": {
+                            "recognition": "DirectHit"
+                        },
+                        "SeasonEvent_MiniGame_Quiz_HUB": {
+                            "enabled": true
+                        },
+                        "SeasonEvent_MiniGame_Quiz_CheckDaily": {
                             "recognition": "DirectHit"
                         }
                     }
