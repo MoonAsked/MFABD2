@@ -6,6 +6,7 @@ from .name_i18n import canon
 
 
 KEEP_ALL = -1
+MIN_AUTO_DAYS = 7
 MODE_NODE = "Agt_Arbitrage_MaterialSale_Mode"
 AUTO_NODE = "Agt_Arbitrage_MaterialSale_Auto"
 MANUAL_NODE = "Agt_Arbitrage_MaterialSale_Manual"
@@ -18,11 +19,12 @@ def _integer(value, label, minimum=0):
     return value
 
 
-def scale_reserve(daily, days):
-    """无限保留先分支处理：-1×0仍然是无限保留，而不是零。"""
+def scale_reserve(daily, days, floor=0):
+    """无限保留先分支处理：-1×0仍然是无限保留，而不是零；有限值不低于保底。"""
     _integer(daily, "日保留值", KEEP_ALL)
     _integer(days, "保留天数")
-    return KEEP_ALL if daily == KEEP_ALL else daily * days
+    _integer(floor, "保底保留值")
+    return KEEP_ALL if daily == KEEP_ALL else max(daily * days, floor)
 
 
 def _quantities(raw, label):
@@ -39,6 +41,21 @@ def _quantities(raw, label):
     return quantities
 
 
+def _floors(raw, daily):
+    """保底只列有保底的材料；未列出即 0。保底不能为 -1，也不能出现日表外的材料。"""
+    if not isinstance(raw, dict):
+        raise ValueError("保底表必须是材料数量表")
+    floors = {}
+    for raw_name, value in raw.items():
+        if not isinstance(raw_name, str) or not raw_name.strip():
+            raise ValueError("保底表包含无效材料名")
+        material = canon(raw_name.strip())
+        if material in floors or material not in daily:
+            raise ValueError(f"保底表材料重复或不在日表中: {material}")
+        floors[material] = _integer(value, f"保底表/{material}")
+    return floors
+
+
 def _attach(context, node_name):
     node = context.get_node_object(node_name)
     attach = getattr(node, "attach", None) if node is not None else None
@@ -52,6 +69,8 @@ class MaterialReservePolicy:
     mode: str
     reserves: dict[str, int]
     sale_eligible: frozenset[str]
+    days: int | None = None
+    days_entered: int | None = None
 
     def reserve_for(self, material):
         """未收录或未确认可直卖的材料，始终无限保留。"""
@@ -59,6 +78,14 @@ class MaterialReservePolicy:
         if self.mode == "off" or material not in self.sale_eligible:
             return KEEP_ALL
         return self.reserves.get(material, KEEP_ALL)
+
+    def describe(self):
+        """出售日志用的一句话；只有按天数模式带生效天数。"""
+        if self.days is None:
+            return f"保留模式={self.mode}"
+        if self.days != self.days_entered:
+            return f"保留模式={self.mode}（填{self.days_entered}天，按下限{self.days}天）"
+        return f"保留模式={self.mode}（按{self.days}天）"
 
 
 def read_material_reserve_policy(context):
@@ -74,7 +101,7 @@ def read_material_reserve_policy(context):
         return MaterialReservePolicy(mode, {}, frozenset())
 
     data = _attach(context, DATA_NODE)
-    if type(data.get("schema_version")) is not int or data["schema_version"] != 1:
+    if type(data.get("schema_version")) is not int or data["schema_version"] != 2:
         raise ValueError("材料日表版本不支持")
     daily = _quantities(data.get("daily_reserve"), "日保留表")
     raw_eligible = data.get("sale_eligible")
@@ -86,13 +113,19 @@ def read_material_reserve_policy(context):
     if len(eligible) != len(raw_eligible) or not eligible <= daily.keys():
         raise ValueError("材料直卖资格表重复或包含未知材料")
 
+    days = entered = None
     if mode == "auto":
-        days = _integer(_attach(context, AUTO_NODE).get("days"), "保留天数")
-        reserves = {material: scale_reserve(value, days) for material, value in daily.items()}
+        floors = _floors(data.get("floor_reserve"), daily)
+        entered = _integer(_attach(context, AUTO_NODE).get("days"), "保留天数")
+        # 每周制作模式会攒一周的料再做，少于 7 天会把这批料在制作前卖掉
+        days = max(entered, MIN_AUTO_DAYS)
+        reserves = {
+            material: scale_reserve(value, days, floors.get(material, 0)) for material, value in daily.items()
+        }
     else:
         reserves = _quantities(_attach(context, MANUAL_NODE), "手动保留表")
         if reserves.keys() != daily.keys():
             raise ValueError("手动保留表与材料目录不一致")
     if any(value != KEEP_ALL for material, value in reserves.items() if material not in eligible):
         raise ValueError("未确认直卖资格的材料必须无限保留")
-    return MaterialReservePolicy(mode, reserves, eligible)
+    return MaterialReservePolicy(mode, reserves, eligible, days, entered)
