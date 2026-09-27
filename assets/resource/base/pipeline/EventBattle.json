@@ -752,7 +752,7 @@
                             369,
                             340
                         ],
-                        "expected": "^.{2,12}$",
+                        "expected": "^.{2,}$",
                         "order_by": "Horizontal"
                     }
                 ]
@@ -778,7 +778,7 @@
                             369,
                             340
                         ],
-                        "expected": "^.{2,12}$",
+                        "expected": "^.{2,}$",
                         "order_by": "Horizontal",
                         "index": -1
                     }
@@ -821,7 +821,7 @@
             369,
             340
         ],
-        "expected": "^.{2,12}$"
+        "expected": "^.{2,}$"
     },
     "SeasonEvent_MiniGame_Quiz_Reward": {
         "desc": "获得奖励",
