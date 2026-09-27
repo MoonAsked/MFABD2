@@ -471,7 +471,7 @@ class ArbitrageSellController(CustomAction):
                     policy = read_material_reserve_policy(context)
                     final_reserves = {name: policy.reserve_for(name) for name in policy.sale_eligible
                                       if name not in _load_recipe_names() and policy.reserve_for(name) >= 0}
-                    mfaalog.info(f"[⑤材料] 保留模式={policy.mode}；仅峰值出售超过保留量的部分")
+                    mfaalog.info(f"[⑤材料] {policy.describe()}；仅峰值出售超过保留量的部分")
                 except Exception as exc:
                     mfaalog.error(f"[⑤材料] 保留配置不可用({exc})，停止材料出售")
                     return False
