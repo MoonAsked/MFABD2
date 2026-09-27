@@ -193,7 +193,7 @@
         ],
         "expected": [
             "开始答题",
-            "解[题題]"
+            "^解[题題]"
         ]
     },
     "SeasonEvent_MiniGame_Quiz_Swipe": {
