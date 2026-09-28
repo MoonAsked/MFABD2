@@ -2140,9 +2140,9 @@
             ]
         },
         "next": [
-            "[JumpBack]Arbitrage_Favorit_Buy_Again",
             "Arbitrage_Favorit_Buy_SubMenu",
-            "Arbitrage_Favorit_Buy_Empty"
+            "Arbitrage_Favorit_Buy_Empty",
+            "[JumpBack]Arbitrage_Favorit_Buy_Again"
         ]
     },
     "Arbitrage_Favorit_Buy_GlodSet": {
