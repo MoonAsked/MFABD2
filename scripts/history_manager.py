@@ -26,7 +26,7 @@ class HistoryManager:
         直接捕获 vMAJOR.MINOR.PATCH 前缀，后缀类型（-beta/-alpha/-ci 等）无需枚举。
         ⚠️ 若版本号格式（如前缀 'v'、分隔符）发生变更，需同步修改此处正则。
         """
-        # 匹配示例：v2.3.7 / v2.3.7-beta.251112.cf64235 / v2.3.7-alpha.260124.cf64235
+        # 匹配示例：v2.3.7 / v2.3.7-beta.3.251112.gcf64235 / v2.3.7-alpha.1.260124.gcf64235
         match = re.match(r'^v(\d+)\.(\d+)\.(\d+)', tag)
         if not match:
             raise ValueError(f"版本格式异常: {tag}")

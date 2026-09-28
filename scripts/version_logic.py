@@ -3,9 +3,8 @@
 版本对比逻辑 - 决定跟哪个版本对比
 """
 
-import re
 from typing import Optional, List
-from version_rules import filter_valid_versions, sort_versions, is_valid_formal_version, is_valid_beta_version, is_valid_alpha_version, is_valid_ci_version
+from version_rules import filter_valid_versions, sort_versions, core_version, is_valid_formal_version, is_valid_beta_version, is_valid_alpha_version, is_valid_ci_version
 
 def get_all_tags() -> List[str]:
     """获取所有Git标签"""
@@ -56,8 +55,11 @@ def find_previous_formal_release(current_tag: str) -> Optional[str]:
         return None
     
     # 清理当前标签，获取基础版本号
-    current_clean = re.sub(r'(-beta\.\d+\.[a-f0-9]+|-ci\.\d+\.[a-f0-9]+)$', '', current_tag)
-    
+    current_version = core_version(current_tag)
+    if current_version is None:
+        return None
+    current_clean = "v%d.%d.%d" % current_version
+
     # 找到当前标签在正式版列表中的位置
     for i, formal_tag in enumerate(formal_versions):
         if formal_tag == current_clean:
@@ -69,16 +71,9 @@ def find_previous_formal_release(current_tag: str) -> Optional[str]:
     
     # 如果当前标签不是正式版，找比它小的最新正式版
     # 使用版本号比较而不是字符串比较
-    def parse_simple_version(tag):
-        """简单版本解析用于比较"""
-        base_tag = re.sub(r'(-beta\.\d+\.[a-f0-9]+|-alpha\.\d+\.[a-f0-9]+|-ci\.\d+\.[a-f0-9]+)$', '', tag)
-        numbers = base_tag[1:].split('.')
-        return tuple(int(num) for num in numbers)
-    
-    current_version = parse_simple_version(current_clean)
     for formal_tag in formal_versions:
-        formal_version = parse_simple_version(formal_tag)
-        if formal_version < current_version:
+        formal_version = core_version(formal_tag)
+        if formal_version is not None and formal_version < current_version:
             return formal_tag
     
     return None
@@ -161,7 +156,7 @@ if __name__ == "__main__":
     # 测试不同的场景
     test_scenarios = [
         "v2.3.6",                           # 正式版
-        "v2.3.7-beta.251115.abc1234",       # 公测版
+        "v2.3.7-beta.3.251115.gabc1234",    # 公测版
         "v2.3.7-ci.251115.def5678",         # 开发版
         "v2.4.0-beta",                      # 无效版本（手打）
     ]

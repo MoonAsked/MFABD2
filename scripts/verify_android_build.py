@@ -55,17 +55,19 @@ class AndroidBuildChecks(unittest.TestCase):
             verify_identity(ci, badging, signature)
 
     def test_explicit_version_is_preserved_and_invalid_is_rejected(self):
-        for value in ("v4.3.19", "v4.3.19-beta.260909.abcdef", "4.3.19-alpha.1+ci"):
+        for value in ("v4.3.19", "v4.3.19-beta.3.260909.gabcdef0", "v4.3.19-beta.260909.abcdef", "4.3.19-alpha.1+ci"):
             self.assertEqual(android_build.display_version(value, [], "sha", "260909", ""), value)
         for value in ("v4.3.19/foo", "v4.3.19\nextra"):
             with self.assertRaises(ValueError):
                 android_build.display_version(value, [], "sha", "260909", "")
 
     def test_implicit_channels_follow_project_rules(self):
-        tags = ["v4.3.17", "v4.3.18", "v4.3.18-beta.1"]
-        self.assertEqual(android_build.display_version("", tags, "abcdef", "260909", ""), "v4.3.18-ci.260909.abcdef")
-        self.assertEqual(android_build.display_version("", tags, "abcdef", "260909", "[deploy-beta]"), "v4.3.19-beta.260909.abcdef")
-        self.assertEqual(android_build.display_version("", tags, "abcdef", "260909", "[deploy-alpha]"), "v4.3.20-alpha.260909.abcdef")
+        tags = ["v4.3.17", "v4.3.18", "v4.3.18-beta.1", "v4.3.19-beta.2.260908.g1234567"]
+        self.assertEqual(android_build.display_version("", tags, "abcdef0", "260909", ""), "v4.3.18-ci.260909.abcdef0")
+        self.assertEqual(android_build.display_version("", tags, "abcdef0", "260909", "[deploy-beta]"),
+                         "v4.3.19-beta.3.260909.gabcdef0")
+        self.assertEqual(android_build.display_version("", tags, "abcdef0", "260909", "[deploy-alpha]"),
+                         "v4.3.20-alpha.1.260909.gabcdef0")
 
     def test_version_code_range_and_monotonic_sequence(self):
         values = [android_build.version_code(7, attempt) for attempt in range(1, 100)]

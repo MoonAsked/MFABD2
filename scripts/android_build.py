@@ -10,6 +10,8 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
+import version_rules
+
 ROOT = Path(__file__).resolve().parents[1]
 VERSION = re.compile(r"v?\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?")
 MAX_VERSION_CODE = 2_100_000_000
@@ -124,16 +126,14 @@ def display_version(requested: str, tags: list[str], sha: str, date: str, messag
         if not VERSION.fullmatch(requested):
             raise ValueError("Android display version must use the project's version format")
         return requested
-    formal = [tuple(map(int, tag[1:].split('.'))) for tag in tags
-              if re.fullmatch(r"v\d+\.\d+\.\d+", tag)]
-    major, minor, patch = max(formal, default=(0, 0, 0))
     last_line = message.rstrip().splitlines()[-1] if message.strip() else ""
     channel = "ci"
     if "[deploy-alpha]" in last_line:
-        channel, patch = "alpha", patch + 2
+        channel = "alpha"
     elif "[deploy-beta]" in last_line:
-        channel, patch = "beta", patch + 1
-    return f"v{major}.{minor}.{patch}-{channel}.{date}.{sha}"
+        channel = "beta"
+    # Same generator as the desktop release, so a standalone build previews the tag it would get.
+    return version_rules.next_version(tags, channel, date, sha)
 
 
 def replace_once(text: str, old: str, new: str) -> str:

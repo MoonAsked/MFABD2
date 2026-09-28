@@ -43,7 +43,7 @@ body:
     id: version
     attributes:
       label: MFA 版本号
-      description: 请提供具体版本号（例如：v2.4.4-beta.251117.c721d34）
+      description: 请提供具体版本号（例如：v4.4.6-beta.3.260927.g7973ea7a）
     validations:
       required: true
   - type: textarea

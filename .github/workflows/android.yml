@@ -44,6 +44,7 @@ on:
       - scripts/verify_branding.py
       - scripts/android_test_support.py
       - scripts/android_build.py
+      - scripts/version_rules.py
       - scripts/detect_maa_version.py
       - scripts/prepare_icons.py
       - release/branding/**

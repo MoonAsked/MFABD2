@@ -180,7 +180,7 @@ controller 声明，实际运行使用 AndroidNativeController；该版本未按
 
 ## 当前版号与发布阶段
 
-- 显示版本：有显式项目版本时原样保留，包括 `v4.3.19-beta.260909.abcdef`。普通开发构建沿用项目现有规则生成 `vX.Y.Z-ci.YYMMDD.sha`，提交末行的alpha/beta标记也按现行规则处理。
+- 显示版本：有显式项目版本时原样保留，包括 `v4.3.19-beta.3.260909.gabcdef0`。未指定时与桌面发版共用 `scripts/version_rules.py` 生成：普通开发构建为 `vX.Y.Z-ci.YYMMDD.sha`，提交末行带 alpha/beta 标记时预演本次发版会拿到的 `-beta.N.YYMMDD.gsha` 版号。
 - 系统内部 `versionCode`：`version_code_offset + GITHUB_RUN_NUMBER * 100 + GITHUB_RUN_ATTEMPT`。限制attempt为1至99、整体不超过2100000000，与SemVer、日期或SHA无关。
 - 正式、Beta、Alpha、CI 共用这一序列，不给渠道分配数字区间。新运行的编号大于之前所有运行的编号；同一次运行的重跑只增加末两位。重跑旧运行仍占旧编号区间，并不成为最新构建；需要将旧源码重新发行时，手动新建一次工作流运行，不使用旧运行的 Re-run。
 - 资源 interface.version 和 APK versionName 使用相同显示版本；versionCode 变化也触发 UI 资源重新解包。
