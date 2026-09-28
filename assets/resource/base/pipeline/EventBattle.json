@@ -160,6 +160,7 @@
     },
     "SeasonEvent_EnterlBattle_Normal": {
         "desc": "点击普通战斗",
+        "max_hit": 10,
         "recognition": "OCR",
         "roi": [
             69,
@@ -180,8 +181,8 @@
         "post_delay": 3000,
         "timeout": 10000,
         "next": [
-            "SeasonEvent_Battle_Recon_AP_Full",
-            "SeasonEvent_Battle_Recon_AP_Empty",
+            "SeasonEvent_EnterlBattle_Confirm",
+            "SeasonEvent_EnterlBattle_Normal",
             "[JumpBack]Global_WaitingForLoading"
         ],
         "on_error": [
@@ -191,6 +192,7 @@
     },
     "SeasonEvent_EnterlBattle_Challenge": {
         "desc": "点击挑战战斗",
+        "max_hit": 10,
         "recognition": "OCR",
         "roi": [
             69,
@@ -211,14 +213,33 @@
         "post_delay": 3000,
         "timeout": 10000,
         "next": [
-            "SeasonEvent_Battle_Recon_AP_Full",
-            "SeasonEvent_Battle_Recon_AP_Empty",
+            "SeasonEvent_EnterlBattle_Confirm",
+            "SeasonEvent_EnterlBattle_Challenge",
             "[JumpBack]Global_WaitingForLoading"
         ],
         "on_error": [
             "Event_Battle_IsMenu"
         ],
         "focus": "EM.活动.难度:挑战"
+    },
+    "SeasonEvent_EnterlBattle_Confirm": {
+        "desc": "确认已进入普通或挑战战斗页，再判断战斗次数；仅复用标题识别，不执行难度切换。",
+        "recognition": "Or",
+        "any_of": [
+            "SeasonEvent_TabTo_Nomarl",
+            "SeasonEvent_TabTo_Challenge"
+        ],
+        "pre_delay": 0,
+        "post_delay": 0,
+        "timeout": 10000,
+        "next": [
+            "SeasonEvent_Battle_Recon_AP_Full",
+            "SeasonEvent_Battle_Recon_AP_Empty",
+            "[JumpBack]Global_WaitingForLoading"
+        ],
+        "on_error": [
+            "Event_Battle_IsMenu"
+        ]
     },
     "SeasonEvent_Battle_Recon_AP_Full": {
         "desc": "判断AP为:满",
