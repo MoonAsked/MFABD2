@@ -2141,18 +2141,19 @@
         },
         "next": [
             "[JumpBack]Arbitrage_Favorit_Buy_Again",
-            "Arbitrage_Favorit_Buy_GlodSet"
+            "Arbitrage_Favorit_Buy_SubMenu",
+            "Arbitrage_Favorit_Buy_Empty"
         ]
     },
     "Arbitrage_Favorit_Buy_GlodSet": {
+        "desc": "确认购买弹窗出现后记录扣款前金币，再进入确认购买；不提前接走一键购买的补点重试。",
         "action": "Custom",
         "custom_action": "GoldSnapshot",
         "custom_action_param": {
             "node": "Agt_BuyQuantity_Gold_Ocr"
         },
         "next": [
-            "Arbitrage_Favorit_Buy_SubMenu",
-            "Arbitrage_Favorit_Buy_Empty"
+            "Arbitrage_Favorit_Buy_SubMenu_BuyAction"
         ]
     },
     "Arbitrage_Favorit_Buy_Empty": {
@@ -2206,7 +2207,7 @@
             "timeout": 10000
         },
         "next": [
-            "Arbitrage_Favorit_Buy_SubMenu_BuyAction"
+            "Arbitrage_Favorit_Buy_GlodSet"
         ]
     },
     "Arbitrage_Favorit_Buy_SubMenu_BuyAction": {
