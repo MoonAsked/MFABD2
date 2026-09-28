@@ -139,7 +139,9 @@ class SmartAction(CustomAction):
                 return False
             return self._loop(context, cfg, tag)
         except Exception as e:
-            utils.mfaalog.error(f"{tag} ❌ 异常: {e}")
+            utils.mfaalog.error(f"{tag} 动作检查执行失败")
+            import traceback
+            utils.mfaalog.debug(f"{tag} 异常: {e}\n{traceback.format_exc()}")
             return False
 
     # ------------------------------------------------------------------
@@ -159,7 +161,8 @@ class SmartAction(CustomAction):
             try:
                 params = json.loads(str(raw).strip())
             except ValueError as e:
-                utils.mfaalog.error(f"{tag} ❌ 参数 JSON 解析失败: {e}")
+                utils.mfaalog.error(f"{tag} 动作未执行：参数格式错误")
+                utils.mfaalog.debug(f"{tag} 参数 JSON 解析失败: {e}")
                 return None
         # json.loads 成功不代表拿到了 object —— 参数写成 "abc" / [1,2] 时下面的 .get
         # 会抛 AttributeError，落进 run 的笼统异常分支，配置错误就查不出是哪一条。
@@ -174,7 +177,8 @@ class SmartAction(CustomAction):
 
         detect_roi = params.get("detect_roi")
         if not isinstance(detect_roi, (list, tuple)) or len(detect_roi) != 4:
-            utils.mfaalog.error(f"{tag} ❌ detect_roi 必须是 [x,y,w,h]，实际: {detect_roi!r}")
+            utils.mfaalog.error(f"{tag} 动作未执行：检测区域配置无效")
+            utils.mfaalog.debug(f"{tag} detect_roi 必须是 [x,y,w,h]，实际: {detect_roi!r}")
             return None
 
         on_changed = str(params.get("on_changed", "next")).strip().lower()
@@ -183,14 +187,16 @@ class SmartAction(CustomAction):
 
         for key, val in (("on_changed", on_changed), ("on_unchanged", on_unchanged)):
             if val not in _ACTS:
-                utils.mfaalog.error(f"{tag} ❌ {key} 只接受 loop/next/error，实际: {val!r}")
+                utils.mfaalog.error(f"{tag} 动作未执行：{key} 分支配置无效")
+                utils.mfaalog.debug(f"{tag} {key} 只接受 loop/next/error，实际: {val!r}")
                 return None
         if on_changed == "loop" and on_unchanged == "loop":
             utils.mfaalog.error(f"{tag} ❌ on_changed 与 on_unchanged 不能同时为 loop（这是死循环）")
             return None
         # loop_exhausted 是 loop 的出口，再填 loop 就没有出口了。想无限转请调大 loop_limit。
         if loop_exhausted not in ("next", "error"):
-            utils.mfaalog.error(f"{tag} ❌ loop_exhausted 只接受 next/error，实际: {loop_exhausted!r}")
+            utils.mfaalog.error(f"{tag} 动作未执行：循环结束分支配置无效")
+            utils.mfaalog.debug(f"{tag} loop_exhausted 只接受 next/error，实际: {loop_exhausted!r}")
             return None
 
         try:
@@ -202,11 +208,13 @@ class SmartAction(CustomAction):
             # 定位与 timeout 一样 —— 有个够用的默认值，要精确控制就自己写。
             loop_limit = int(params.get("loop_limit", 20))
         except (TypeError, ValueError) as e:
-            utils.mfaalog.error(f"{tag} ❌ 数值参数解析失败: {e}")
+            utils.mfaalog.error(f"{tag} 动作未执行：数值参数无法解析")
+            utils.mfaalog.debug(f"{tag} 数值参数解析失败: {e}")
             return None
 
         if threshold <= 0 or settle_delay < 0 or unchanged_streak < 1 or loop_limit < 1:
-            utils.mfaalog.error(
+            utils.mfaalog.error(f"{tag} 动作未执行：数值参数超出有效范围")
+            utils.mfaalog.debug(
                 f"{tag} ❌ 数值越界: threshold={threshold} settle_delay={settle_delay} "
                 f"unchanged_streak={unchanged_streak} loop_limit={loop_limit}"
             )
@@ -215,7 +223,8 @@ class SmartAction(CustomAction):
         # loop 不是结论，复检在它前面是空转 —— 这一侧的次数归 loop_limit 管。不拒绝配置，
         # 但必须说出来：静默吃掉一个写了的参数，等于让人对着日志猜为什么跑了 N 轮。
         if on_unchanged == "loop" and "unchanged_streak" in params:
-            utils.mfaalog.warning(
+            utils.mfaalog.warning(f"{tag} 循环模式忽略连续复检设置，改用循环次数上限")
+            utils.mfaalog.debug(
                 f"{tag} ⚠️ on_unchanged 为 loop 时 unchanged_streak={unchanged_streak} 不生效，"
                 f"重试次数由 loop_limit={loop_limit} 决定"
             )
@@ -269,35 +278,41 @@ class SmartAction(CustomAction):
             if diff >= cfg["threshold"]:
                 streak = 0
                 act = cfg["on_changed"]
-                utils.mfaalog.info(f"{tag} ✅ 第{rounds}轮 画面已改变 (diff={diff:.2f} ≥ {cfg['threshold']}) → {act}")
+                utils.mfaalog.debug(f"{tag} ✅ 第{rounds}轮 画面已改变 (diff={diff:.2f} ≥ {cfg['threshold']}) → {act}")
             elif cfg["on_unchanged"] == "loop":
                 # 这一侧不数 streak：loop 不是结论，复检挂在它前面是空转（见文件头）。
                 # 次数归 loop_limit 管，与 on_changed:"loop" 完全对称。
                 act = "loop"
-                utils.mfaalog.warning(
+                utils.mfaalog.debug(
                     f"{tag} ⚠️ 第{rounds}轮 画面未改变 (diff={diff:.2f}) "
                     f"— 重试 {loops + 1}/{cfg['loop_limit']}"
                 )
             else:
                 streak += 1
                 if streak < cfg["unchanged_streak"]:
-                    utils.mfaalog.warning(
+                    utils.mfaalog.debug(
                         f"{tag} ⚠️ 第{rounds}轮 画面未改变 (diff={diff:.2f}) "
                         f"— 复检中 {streak}/{cfg['unchanged_streak']}"
                     )
                     continue
                 act = cfg["on_unchanged"]
-                utils.mfaalog.info(
+                utils.mfaalog.debug(
                     f"{tag} 🛑 第{rounds}轮 画面未改变 (diff={diff:.2f}) "
                     f"— 已连续 {streak} 次确认 → {act}"
                 )
 
             if act != "loop":
+                if diff >= cfg["threshold"]:
+                    result = "画面已变化，继续执行" if act == "next" else "画面已变化，结束本次尝试"
+                else:
+                    result = "画面未变化，结束本次尝试"
+                utils.mfaalog.info(f"{tag} {result}")
                 return act == "next"
 
             loops += 1
             if loops >= cfg["loop_limit"]:
-                utils.mfaalog.warning(
+                utils.mfaalog.warning(f"{tag} 已达到尝试次数上限，结束本次操作")
+                utils.mfaalog.debug(
                     f"{tag} 🛑 loop 已达上限 {cfg['loop_limit']} → {cfg['loop_exhausted']}"
                 )
                 return cfg["loop_exhausted"] == "next"
@@ -316,13 +331,15 @@ class SmartAction(CustomAction):
         # 旧版把返回值整个丢弃 → 代理节点写错/被禁用时动作压根没发生，而前后两帧必然
         # 一致 → diff=0 → 被判成"画面没变" → 配置错误就这样被静默翻译成了业务结论。
         if detail is None:
-            utils.mfaalog.error(
+            utils.mfaalog.error(f"{tag} 动作未执行：代理节点 {node} 未能启动")
+            utils.mfaalog.debug(
                 f"{tag} ❌ 第{rounds}轮 代理节点 [{node}] 未能启动"
                 f"（节点不存在/被禁用/正在停止），动作未执行"
             )
             return False
         if not detail.status.succeeded:
-            utils.mfaalog.warning(f"{tag} ⚠️ 第{rounds}轮 代理节点 [{node}] 非正常结束，动作可能未生效")
+            utils.mfaalog.warning(f"{tag} 代理节点 {node} 非正常结束，动作可能未生效")
+            utils.mfaalog.debug(f"{tag} 第{rounds}轮 代理节点 [{node}] 非正常结束")
         return True
 
     # ------------------------------------------------------------------
@@ -336,7 +353,8 @@ class SmartAction(CustomAction):
             return None
         area = self._parse_area(roi, img.shape)
         if area is None:
-            utils.mfaalog.error(f"{tag} ❌ detect_roi {roi} 在 {img.shape[1]}x{img.shape[0]} 画面上取不到有效区域")
+            utils.mfaalog.error(f"{tag} 画面检查失败：检测区域无效")
+            utils.mfaalog.debug(f"{tag} detect_roi {roi} 在 {img.shape[1]}x{img.shape[0]} 画面上取不到有效区域")
             return None
         x, y, w, h = area
         return img[y : y + h, x : x + w]
@@ -349,13 +367,15 @@ class SmartAction(CustomAction):
             utils.mfaalog.error(f"{tag} ❌ 比对失败：有一帧为空")
             return None
         if img1.shape != img2.shape:
-            utils.mfaalog.error(f"{tag} ❌ 比对失败：两帧尺寸不一致 {img1.shape} vs {img2.shape}")
+            utils.mfaalog.error(f"{tag} 比对失败：两帧尺寸不一致")
+            utils.mfaalog.debug(f"{tag} 两帧尺寸: {img1.shape} vs {img2.shape}")
             return None
         # 空切片过得了上面的尺寸检查（两帧同为 (h,0,3)），而 np.mean 对空数组返回 nan，
         # nan >= threshold 恒为 False —— 又变回"静默判成画面没变"。_parse_area 已从源头
         # 堵死，这里是最后一道，不靠上游正确性。
         if img1.size == 0:
-            utils.mfaalog.error(f"{tag} ❌ 比对失败：ROI 区域为空 {img1.shape}")
+            utils.mfaalog.error(f"{tag} 比对失败：检测区域为空")
+            utils.mfaalog.debug(f"{tag} ROI 尺寸: {img1.shape}")
             return None
         # 转 float 防 uint8 减法溢出（2 - 5 会变成 253）。不转灰度，直接对 BGR 三通道
         # 求均值 —— 效果与加权灰度一致，甚至更灵敏。

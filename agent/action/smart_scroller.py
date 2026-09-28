@@ -63,7 +63,7 @@ class SmartSwipe(CustomAction):
         try:
             # --- 1. 参数解析 ---
             if not argv.custom_action_param:
-                utils.mfaalog.error("[Py] SmartSwipe 缺少参数")
+                utils.mfaalog.error("[SmartSwipe] SmartSwipe 缺少参数")
                 return False
             
             if isinstance(argv.custom_action_param, dict):
@@ -84,7 +84,7 @@ class SmartSwipe(CustomAction):
             threshold = float(params.get("threshold", 3.0))
 
             if not (proxy_node and begin_area and end_area and detect_roi):
-                utils.mfaalog.error("[Py] SmartSwipe 缺少关键参数")
+                utils.mfaalog.error("[SmartSwipe] SmartSwipe 缺少关键参数")
                 return False
 
             # --- 2. 执行循环 ---
@@ -94,7 +94,7 @@ class SmartSwipe(CustomAction):
                 # A. 动作前采样 (同时获取到了屏幕尺寸，用于解析 detect_roi)
                 img_before = context.tasker.controller.post_screencap().wait().get()
                 if img_before is None:
-                    utils.mfaalog.error("[Py] 截图获取失败")
+                    utils.mfaalog.error("[SmartSwipe] 截图获取失败")
                     return False
 
                 # B. 设定坐标
@@ -116,14 +116,16 @@ class SmartSwipe(CustomAction):
                 # 静默翻译成了业务结论。这里把两种情况分开报。
                 swipe_detail = context.run_task(proxy_node, swipe_override)
                 if swipe_detail is None:
-                    utils.mfaalog.error(
-                        f"[Py] ❌ 代理节点 [{proxy_node}] 未能启动"
+                    utils.mfaalog.error(f"[SmartSwipe] 滑动未执行：代理节点 {proxy_node} 未能启动")
+                    utils.mfaalog.debug(
+                        f"[SmartSwipe] ❌ 代理节点 [{proxy_node}] 未能启动"
                         f"（节点不存在/被禁用/正在停止），本次滑动未执行"
                     )
                     return False
                 if not swipe_detail.status.succeeded:
-                    utils.mfaalog.warning(
-                        f"[Py] ⚠️ 代理节点 [{proxy_node}] 执行失败，本次滑动可能未生效"
+                    utils.mfaalog.warning(f"[SmartSwipe] 代理节点 {proxy_node} 执行失败，滑动可能未生效")
+                    utils.mfaalog.debug(
+                        f"[SmartSwipe] ⚠️ 代理节点 [{proxy_node}] 执行失败，本次滑动可能未生效"
                     )
 
 
@@ -139,17 +141,19 @@ class SmartSwipe(CustomAction):
                 diff = self._calc_diff_numpy(roi_before, roi_after)
                 
                 if diff >= threshold:
-                    utils.mfaalog.info(f"[Py] ✅ 滑动成功 (Diff: {diff:.2f} > {threshold})")
+                    utils.mfaalog.debug(f"[SmartSwipe] ✅ 滑动成功 (Diff: {diff:.2f} > {threshold})")
                     return True
                 else:
-                    utils.mfaalog.warning(f"[Py] ⚠️ 画面静止 (Diff: {diff:.2f}) - 确认中({i+1}/{total_attempts})...")
+                    utils.mfaalog.debug(f"[SmartSwipe] ⚠️ 画面静止 (Diff: {diff:.2f}) - 确认中({i+1}/{total_attempts})...")
             
             # --- 3. 触底判定 ---
-            utils.mfaalog.info("[Py] 🛑 确认触底，触发 Jump Out")
+            utils.mfaalog.info("[SmartSwipe] 多次滑动后画面未变化，停止滚动")
             return False
 
         except Exception as e:
-            utils.mfaalog.error(f"[Py] SmartSwipe 异常: {e}")
+            utils.mfaalog.error("[SmartSwipe] 滑动检查执行失败")
+            import traceback
+            utils.mfaalog.debug(f"[SmartSwipe] SmartSwipe 异常: {e}\n{traceback.format_exc()}")
             return False
 
     # --- 辅助函数 ---
@@ -187,7 +191,8 @@ class SmartSwipe(CustomAction):
         if img is None: return None
         # 如果填写的不是 4位数组 (例如填了 string 导致异常)，做个容错防御
         if not isinstance(roi, (list, tuple)) or len(roi) != 4:
-            utils.mfaalog.warning(f"[Py] detect_roi 格式错误: {roi}，退回全屏比对")
+            utils.mfaalog.warning("[SmartSwipe] 检测区域配置无效，已改用全屏比对")
+            utils.mfaalog.debug(f"[SmartSwipe] detect_roi 格式错误: {roi}，退回全屏比对")
             return img 
             
         x, y, w, h = self._parse_area(roi, img.shape)
@@ -202,7 +207,8 @@ class SmartSwipe(CustomAction):
         try:
             # 确保两张图尺寸一致，防报错
             if img1.shape != img2.shape:
-                utils.mfaalog.warning(f"[Py] ⚠️ 图像尺寸不匹配: {img1.shape} vs {img2.shape}，强行视为画面静止以防死循环")
+                utils.mfaalog.warning("[SmartSwipe] 截图尺寸不一致，本次按画面未变化处理")
+                utils.mfaalog.debug(f"[SmartSwipe] 图像尺寸不匹配: {img1.shape} vs {img2.shape}")
                 return 0.0  # 如果图像大小不一致，返回报错，并且返回‘完全一致’欺骗,跳出滑动。数学上撒谎，但业务上安全。
                 
             # 1. 确保是浮点数，防止 uint8 减法溢出 (2 - 5 变成 253)
@@ -217,5 +223,7 @@ class SmartSwipe(CustomAction):
             # (OpenCV 转灰度其实是加权平均，这里直接平均效果一样好，甚至更灵敏)
             return np.mean(diff_arr)
         except Exception as e:
-            utils.mfaalog.error(f"[Py] Diff计算错误: {e}")
+            utils.mfaalog.error("[SmartSwipe] 画面比对失败，本次按未变化处理")
+            import traceback
+            utils.mfaalog.debug(f"[SmartSwipe] Diff计算错误: {e}\n{traceback.format_exc()}")
             return 0.0

@@ -59,6 +59,17 @@ class CookingStockTests(unittest.TestCase):
         stock._OBSERVATIONS.clear()
         stock._SCAN_STARTS.clear()
 
+    def test_snapshot_stops_before_capture_or_save_when_account_is_unavailable(self):
+        context = Mock()
+        argv = SimpleNamespace(task_detail=SimpleNamespace(task_id=101))
+        with patch.object(stock, "sync_from_context", return_value=False), \
+                patch.object(stock, "save_cooking_stock_observation") as save:
+            self.assertFalse(stock.CookingStockSnapshot().run(context, argv))
+            context.tasker.controller.post_screencap.assert_not_called()
+            context.run_recognition.assert_not_called()
+            save.assert_not_called()
+        self.assertEqual(stock._OBSERVATIONS, {})
+
     def test_begin_keeps_first_timestamp_within_task(self):
         boundary = stock.CookingInventoryBoundary()
         argv = SimpleNamespace(custom_action_param={"mode": "begin"},

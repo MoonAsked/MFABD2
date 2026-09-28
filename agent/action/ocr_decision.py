@@ -111,7 +111,7 @@ import utils
 class OCR_RankAndPatch(CustomAction):
     def run(self, context: Context, argv: CustomAction.RunArg) -> bool:
         try:
-            utils.mfaalog.info("[Py] 🚀 OCR_Rank v3.0 启动...")
+            utils.mfaalog.info("[OCR_RankAndPatch] 🚀 OCR_Rank v3.0 启动...")
 
             # --- 1. 参数解析 ---
             if not argv.custom_action_param: return False
@@ -139,11 +139,11 @@ class OCR_RankAndPatch(CustomAction):
             internal_pick_index = user_pick - 1
 
             if not (replacement_list and target_node):
-                utils.mfaalog.error("[Py] ❌ 缺少必要参数 (replacement_list / target_node)")
+                utils.mfaalog.error("[OCR_RankAndPatch] ❌ 缺少必要参数 (replacement_list / target_node)")
                 return False
 
             if internal_pick_index < 0:
-                utils.mfaalog.error(f"[Py] ❌ pick_index 必须 >= 1")
+                utils.mfaalog.error(f"[OCR_RankAndPatch] ❌ pick_index 必须 >= 1")
                 return False
 
             # --- 2. 获取 OCR 列表 ---
@@ -161,7 +161,7 @@ class OCR_RankAndPatch(CustomAction):
             elif isinstance(raw_reco, list): ocr_items = raw_reco
 
             if not ocr_items:
-                utils.mfaalog.warning(f"[Py] ⚠️ 未提取到 OCR 列表")
+                utils.mfaalog.warning("[OCR_RankAndPatch] 未识别到可供选择的文字")
                 return False
 
             # --- 3. 物理排序 (Physical Sort) ---
@@ -201,7 +201,8 @@ class OCR_RankAndPatch(CustomAction):
                     try:
                         matches = re.findall(filter_regex, clean_text)
                     except Exception as e:
-                        utils.mfaalog.error(f"[Py] 正则匹配错误: {e}，回退默认正则")
+                        utils.mfaalog.warning("[OCR_RankAndPatch] 数字提取规则无效，已改用默认规则")
+                        utils.mfaalog.debug(f"[OCR_RankAndPatch] 正则匹配错误: {e}，回退默认正则")
                         matches = re.findall(r"(\d+\.?\d*)", clean_text)
                 
                 if matches:
@@ -224,7 +225,7 @@ class OCR_RankAndPatch(CustomAction):
                         pass # 转换浮点数失败则跳过该条目
             
             if not clean_data:
-                utils.mfaalog.warning(f"[Py] ⚠️ 无有效数字")
+                utils.mfaalog.warning("[OCR_RankAndPatch] 未识别到可供选择的有效数字")
                 return False
 
             # 重新编号：clean_data 已按物理位置有序，重置 original_idx 消除因噪声项造成的空洞
@@ -240,21 +241,22 @@ class OCR_RankAndPatch(CustomAction):
                 f"{int(x['val']) if number_mode=='int' else x['val']}(第{x['original_idx']+1}个)" 
                 for x in sorted_data
             ])
-            utils.mfaalog.info(f"[Py] 数值排序: {log_str}")
+            utils.mfaalog.debug(f"[OCR_RankAndPatch] 数值排序: {log_str}")
 
             # Pick
             if internal_pick_index >= len(sorted_data):
-                utils.mfaalog.error(f"[Py] ❌ 排名 {user_pick} 超出范围 (数据量: {len(sorted_data)})")
+                utils.mfaalog.error(f"[OCR_RankAndPatch] ❌ 排名 {user_pick} 超出范围 (数据量: {len(sorted_data)})")
                 return False
                 
             winner = sorted_data[internal_pick_index]
             target_idx = winner['original_idx']
 
-            utils.mfaalog.info(f"[Py] 🏆 选中: {winner['text']} (物理位置: 第 {target_idx+1} 个)")
+            utils.mfaalog.info(f"[OCR_RankAndPatch] 已选中：{winner['text']}")
+            utils.mfaalog.debug(f"[OCR_RankAndPatch] 🏆 选中: {winner['text']} (物理位置: 第 {target_idx+1} 个)")
 
             # --- 6. 注入 ---
             if target_idx >= len(replacement_list):
-                utils.mfaalog.error(f"[Py] ❌ 替换表不足 (需要第 {target_idx+1} 个)")
+                utils.mfaalog.error(f"[OCR_RankAndPatch] ❌ 替换表不足 (需要第 {target_idx+1} 个)")
                 return False
 
             injection_value = replacement_list[target_idx]
@@ -264,10 +266,12 @@ class OCR_RankAndPatch(CustomAction):
                     target_param: injection_value
                 }
             })
-            utils.mfaalog.info(f"[Py] 💉 注入: {injection_value} -> {target_node}")
+            utils.mfaalog.debug(f"[OCR_RankAndPatch] 💉 注入: {injection_value} -> {target_node}")
             
             return True
 
         except Exception as e:
-            utils.mfaalog.error(f"[Py] 异常: {e}")
+            utils.mfaalog.error("[OCR_RankAndPatch] 数字选择执行失败")
+            import traceback
+            utils.mfaalog.debug(f"[OCR_RankAndPatch] 异常: {e}\n{traceback.format_exc()}")
             return False

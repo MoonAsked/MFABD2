@@ -73,7 +73,8 @@ def main():
 
     try:
         instance_id = resolve_instance_id()
-        configure_account_session(project_root, android=runtime.mode == "android", instance_id=instance_id or "")
+        configure_account_session(project_root, android=runtime.mode == "android", dev=runtime.mode == "dev",
+                                  instance_id=instance_id or "")
         PersistentStore.prepare_directory()
         mfaalog.info("✅ [Agent] 存档目录已就绪（业务任务首次使用时确定账号）")
     except Exception as e:

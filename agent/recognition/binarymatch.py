@@ -268,7 +268,8 @@ class HSVShapeMatching(CustomRecognition):
             return None
 
         except Exception:
-            mfaalog.error(f"[HSVShapeMatching] 执行异常:\n{traceback.format_exc()}")
+            mfaalog.error("[HSVShapeMatching] 二值化识别执行失败")
+            mfaalog.debug(f"[HSVShapeMatching] 执行异常:\n{traceback.format_exc()}")
             return None
 
     # ------------------------------------------------------------------
@@ -317,9 +318,10 @@ class HSVShapeMatching(CustomRecognition):
             safe_node = re.sub(r'[<>:"/\\|?*]', '_', node_name)
             filename  = f"{debug_dir}/debug_{safe_node}_{ts}_{stage}.png"
             Image.fromarray(bgr_img[..., ::-1]).save(filename)
-            mfaalog.info(f"[HSVShapeMatching] [{stage}] {node_name} 覆盖 {hit}px ({pct:.1f}%) → {filename}")
+            mfaalog.debug(f"[HSVShapeMatching] [{stage}] {node_name} 覆盖 {hit}px ({pct:.1f}%) → {filename}")
         except Exception as e:
-            mfaalog.warning(f"[HSVShapeMatching] [{stage}] {node_name} 覆盖 {hit}px ({pct:.1f}%) | 调试图保存失败: {e}")
+            mfaalog.warning(f"[HSVShapeMatching] {node_name} 调试图保存失败")
+            mfaalog.debug(f"[HSVShapeMatching] [{stage}] {node_name} 覆盖 {hit}px ({pct:.1f}%) | 调试图保存失败: {e}")
 
     def _try_recognition(self, context: Context, node_name: str,
                          processed_bgr: np.ndarray, stage: str) -> Optional[CustomRecognition.AnalyzeResult]:
@@ -396,7 +398,7 @@ class HSVShapeMatching(CustomRecognition):
 #            · 阶段=打分 → {总分, 阈值, 通过, 明细:[每项 值/权重/贡献]}
 #       「贡献」= 值×权重，调参时看这一列，一眼定位谁把分顶上去/谁拖了后腿。
 #     随 MAA 识别记录进入日志分析工具(MaaLogAnalyzer / MaaLogs)，图没了也能复盘。
-#     · mfaalog.warning 输出一行精简摘要(上 UI)；print 输出拼贴明细(仅进 txt 日志)。
+#     · 正常命中/未命中及拼贴明细统一走 debug；真正的执行错误才上普通 UI。
 #
 #   vision 调试图(原生回显)：受 save_draw 门控(RDD_DRAW=0 可强制关)——
 #     · 自定义识别的 C API 回调只有 box+detail 两个输出通道，没有注入 draw 的接口，
@@ -637,8 +639,7 @@ _RESCUE_DECISION_CN = {
     "ambiguous_stable_hits": "多解歧义",
     "error": "异常",
 }
-# GUI 日志栏用的一句话失败摘要。完整 hint(含 aspect_rej 明细、调参方向)长达数百字，
-# 只进 print 与 detail；日志栏刷全文既挤占用户视野，也容易让人漏看后面的救援结论。
+# 调试日志用的一句话未命中摘要；完整 hint、参数和调参方向留在 debug 与 detail。
 _MISS_BRIEF = {
     "red_mask": "HSV 没框到红色",
     "area": "红块面积不在闸内",
@@ -760,7 +761,8 @@ class RedDotDetector(CustomRecognition):
 
         except Exception:
             tb = traceback.format_exc()
-            mfaalog.error(f"[RedDotDetector] 执行异常:\n{tb}")
+            mfaalog.error(f"[RedDotDetector] {getattr(argv, 'node_name', '')} 红点识别执行失败")
+            mfaalog.debug(f"[RedDotDetector] 执行异常:\n{tb}")
             return CustomRecognition.AnalyzeResult(box=None, detail={
                 "result": "error",
                 "error": tb.strip().splitlines()[-1],
@@ -798,7 +800,8 @@ class RedDotDetector(CustomRecognition):
 
         # reco is None：识别根本没跑起来(预设节点名写错/被禁用/图像空) —— 配置错误，与漏检区分
         if reco is None:
-            mfaalog.error(f"[RedDotDetector] preset 未启动: {preset_node}（节点不存在/被禁用/图像空？）")
+            mfaalog.error(f"[RedDotDetector] 预设识别未能执行: {preset_node}")
+            mfaalog.debug(f"[RedDotDetector] preset 未启动: {preset_node}（节点不存在/被禁用/图像空？）")
             return CustomRecognition.AnalyzeResult(box=None, detail={
                 "result": "error", "mode": "preset", "preset": preset_node,
                 "roi": [rx, ry, rw, rh],
@@ -818,7 +821,7 @@ class RedDotDetector(CustomRecognition):
             self._emit_native_vision(
                 context, caller_node, (rx, ry, rw, rh), argv.image,
                 effective_hsv, echo_area, result_box=adjusted)
-            mfaalog.info(f"[RedDotDetector] [preset:{preset_node}] hit -> {adjusted}")
+            mfaalog.debug(f"[RedDotDetector] [preset:{preset_node}] hit -> {adjusted}")
             return CustomRecognition.AnalyzeResult(
                 box=adjusted, detail={"result": "hit", "mode": "preset",
                                       "preset": preset_node,
@@ -827,7 +830,7 @@ class RedDotDetector(CustomRecognition):
         # 真未命中：阶段原因已由预设节点(独立模式)记进嵌套识别记录；这里附带透传其 raw_detail
         self._emit_native_vision(context, caller_node, (rx, ry, rw, rh),
                                  argv.image, effective_hsv, echo_area)
-        mfaalog.warning(f"[RedDotDetector] miss@preset | {argv.node_name} via {preset_node}")
+        mfaalog.debug(f"[RedDotDetector] miss@preset | {argv.node_name} via {preset_node}")
         return CustomRecognition.AnalyzeResult(box=None, detail={
             "result": "miss", "mode": "preset", "preset": preset_node,
             "roi": [rx, ry, rw, rh],
@@ -879,7 +882,7 @@ class RedDotDetector(CustomRecognition):
         min_conf = params.get("min_confidence", _SC_MIN_CONF)
         rescue_cfg, rescue_error = normalize_rescue_config(params.get("flt_hsv_rescue"))
         if rescue_error and "flt_hsv_rescue" in params:
-            print(f"[RedDotDetector] HSV 救援配置无效，已关闭: {rescue_error}")
+            mfaalog.debug(f"[RedDotDetector] HSV 救援配置无效，已关闭: {rescue_error}")
 
         # 1. 按 roi 裁剪
         roi = argv.roi
@@ -937,7 +940,7 @@ class RedDotDetector(CustomRecognition):
                     "_decision": "error", "_winner": None, "_entry_mode": None,
                     "错误": traceback.format_exc().strip().splitlines()[-1],
                 }
-                print(f"[RedDotDetector] HSV 救援异常，保持 baseline miss:\n"
+                mfaalog.debug(f"[RedDotDetector] HSV 救援异常，保持 baseline miss:\n"
                       f"{traceback.format_exc()}")
             self._log_rescue(node, rescue)
             winner = rescue.get("_winner")
@@ -957,7 +960,7 @@ class RedDotDetector(CustomRecognition):
                     rescue["说明"] = _RESCUE_HINT_CN["unconfirmed"]
                     rescue["停因"] = "全区复核不一致"
                     rescue["_decision"] = "unconfirmed"
-                    print(f"[RedDotDetector] 救援 {node} | 全区复核不一致，维持 miss")
+                    mfaalog.debug(f"[RedDotDetector] 救援 {node} | 全区复核不一致，维持 miss")
                 else:
                     outcome_full, candidate_full = confirmed
                     return self._finalize_hit(
@@ -1384,8 +1387,7 @@ class RedDotDetector(CustomRecognition):
 
     @staticmethod
     def _log_rescue(node, rescue):
-        """救援只走 print 单行摘要：ΔS/ΔV、lineage 等细节留在 detail.救援 里，
-        由框架随 reco_details 落进 maa 核心日志，不占 GUI 日志栏（见观测契约）。"""
+        """救援摘要走 debug，普通模式不占 UI；完整数据仍保留在 detail.救援。"""
         if not rescue:
             return
         budget = rescue.get("预算") or {}
@@ -1403,7 +1405,7 @@ class RedDotDetector(CustomRecognition):
                        if a.get("卡在")]
             uniq = sorted(set(blocked))
             tail = f"停因={rescue.get('停因')}" + (f" 卡在={','.join(uniq)}" if uniq else "")
-        print(f"{head} | {tail} | {budget.get('重跑', 0)}重跑 "
+        mfaalog.debug(f"{head} | {tail} | {budget.get('重跑', 0)}重跑 "
               f"{rescue.get('耗时ms', 0)}ms")
 
     def _rescue_confirm_full(self, *, hsv_np, winner, area_range, aspect_range,
@@ -1448,8 +1450,8 @@ class RedDotDetector(CustomRecognition):
                             "min_confidence": min_conf}
         dbg_text = self._compose_dbg(
             effective_params, stat, f"result: HIT box={list(result_box)}", min_conf)
-        mfaalog.info(f"[RedDotDetector] hit | box={result_box} conf={conf} {parts}")
-        print(f"[RedDotDetector] {node}\n{dbg_text}")
+        mfaalog.debug(f"[RedDotDetector] hit | box={result_box} conf={conf} {parts}")
+        mfaalog.debug(f"[RedDotDetector] {node}\n{dbg_text}")
 
         configured_hsv = params.get("hsv_ranges", _RED_RANGES_DEFAULT)
         meta = {
@@ -1755,13 +1757,13 @@ class RedDotDetector(CustomRecognition):
                     f"，已 fail closed 维持 miss")
         elif rescue.get("attempted") or rescue.get("尝试"):
             tail = f"｜救援未成立({rescue.get('结论')})"
-        mfaalog.warning(f"[RedDotDetector] miss@{stage} | "
+        mfaalog.debug(f"[RedDotDetector] miss@{stage} | "
                         f"{_MISS_BRIEF.get(stage, stage)}{tail}")
-        print(f"[RedDotDetector] miss\n{dbg_text}" if dbg_text else f"[RedDotDetector] miss stat={stat}")
+        mfaalog.debug(f"[RedDotDetector] miss\n{dbg_text}" if dbg_text else f"[RedDotDetector] miss stat={stat}")
         return CustomRecognition.AnalyzeResult(box=None, detail=detail)
 
     # ------------------------------------------------------------------
-    # 调试图：常驻、固定命名(覆盖)、时间节流；路径走 print
+    # 调试图：常驻、固定命名(覆盖)、时间节流；路径走 debug
     # ------------------------------------------------------------------
 
     def _bool_to_bgr(self, mask: np.ndarray) -> np.ndarray:
@@ -1783,7 +1785,7 @@ class RedDotDetector(CustomRecognition):
             Image.fromarray(bgr_img[..., ::-1]).save(path)  # 同名覆盖
             return path
         except Exception as e:
-            print(f"[RedDotDetector] 调试图保存失败({tag}): {e}")
+            mfaalog.debug(f"[RedDotDetector] 调试图保存失败({tag}): {e}")
             return None
 
     # ------------------------------------------------------------------
@@ -1820,7 +1822,7 @@ class RedDotDetector(CustomRecognition):
                 },
             })
         except Exception as e:
-            print(f"[RedDotDetector] 原生回显失败: {e}")
+            mfaalog.debug(f"[RedDotDetector] 原生回显失败: {e}")
 
     def _preset_echo_params(self, context: Context, preset_node: str):
         """从预设节点定义里取回显所需的 HSV 范围 / 面积下限；取不到用默认。
@@ -1836,7 +1838,7 @@ class RedDotDetector(CustomRecognition):
             return _RED_RANGES_DEFAULT, 30
 
     def _compose_dbg(self, params: dict, stat: dict, result_line: str, threshold=None) -> str:
-        """把所有调试量拼成一个字符串：print 与 detail 共用，加减参数只改这里。"""
+        """把所有调试量拼成一个字符串：debug 与 detail 共用，加减参数只改这里。"""
         hr = params.get("hsv_ranges", _RED_RANGES_DEFAULT)
         lines = [
             result_line,
@@ -1890,6 +1892,6 @@ class RedDotDetector(CustomRecognition):
             if p:
                 saved.append(p)
         if saved:
-            print(f"[RedDotDetector] 失败截图 -> {saved}")  # 仅入 txt 日志，不上 UI
+            mfaalog.debug(f"[RedDotDetector] 失败截图 -> {saved}")
             return {"status": "saved", "files": saved}
         return {"status": "failed", "files": []}

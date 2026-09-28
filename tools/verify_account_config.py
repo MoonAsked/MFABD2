@@ -16,7 +16,7 @@ from utils.instance_account_config import (
     parse_instance_account, read_instance_account,
 )
 from utils.account_sync import AccountSession, account_source
-from utils.persistent_store import AccountNotReadyError, PersistentStore
+from utils.persistent_store import AccountNotReadyError, PersistentStore, SharedStore
 from utils.runtime_environment import StoragePolicy
 
 
@@ -283,6 +283,62 @@ class FileAndSessionTests(unittest.TestCase):
         context.run_action = lambda _: None
         self.assertFalse(self.session.sync(context))
         self.assertFalse(self.store.save({}))
+
+
+class SharedStorageTests(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        self.account = store_type()
+        self.account.configure_storage(StoragePolicy(self.root))
+        self.shared = type("TestSharedStore", (SharedStore,), {
+            "_initialized": False, "_degraded_readonly": False,
+            "CONFIG_DIR": None, "FILE_PATH": None, "BACKUP_PATH": None,
+        })
+        replacement = patch("utils.persistent_store.PersistentStore", self.account)
+        replacement.start()
+        self.addCleanup(replacement.stop)
+
+    def test_shared_access_before_account_selection_creates_no_account_save(self):
+        backup = self.root / "agent_save_data.json.bak"
+        backup.write_text('{"keep":42}', encoding="utf-8")
+        self.assertTrue(self.shared.set("market", "today"))
+        self.assertEqual(self.shared.get("market"), "today")
+        self.assertIsNone(self.account._current_account_id)
+        self.assertIsNone(self.account.FILE_PATH)
+        self.assertFalse(self.account._account_ready)
+        self.assertFalse(self.account._initialized)
+        with self.assertRaises(AccountNotReadyError):
+            self.account.load()
+        self.assertFalse(self.account.save({"bad": True}))
+        self.assertEqual(backup.read_text(encoding="utf-8"), '{"keep":42}')
+        self.assertEqual({p.name for p in self.root.iterdir()}, {
+            "agent_save_data.json.bak", "agent_shared_data.json", "agent_shared_data.json.bak",
+        })
+
+    def test_switch_and_block_isolate_inventory_but_keep_shared_market(self):
+        self.assertTrue(self.shared.set("market", "today"))
+        for number in ("1", "2"):
+            self.account.bind_account(number, ("instance", int(number)))
+            self.assertTrue(self.account.set("inventory", number))
+            self.assertEqual(self.shared.get("market"), "today")
+        originals = {p.name: p.read_bytes() for p in self.root.glob("agent_save_data*")}
+        self.account.block_account()
+        self.assertTrue(self.shared.set("market", "tomorrow"))
+        self.assertFalse(self.account.set("inventory", "wrong"))
+        self.assertEqual({p.name: p.read_bytes() for p in self.root.glob("agent_save_data*")}, originals)
+        self.assertEqual(self.shared.get("market"), "tomorrow")
+        self.account.bind_account("1", ("instance", 3))
+        self.assertEqual(self.account.get("inventory"), "1")
+
+    def test_shared_readonly_state_survives_account_switch(self):
+        self.assertTrue(self.shared.set("market", "today"))
+        original = self.shared.FILE_PATH.read_bytes()
+        self.shared._degraded_readonly = True
+        self.account.bind_account("2", ("instance", 1))
+        self.assertFalse(self.shared.save({"bad": True}))
+        self.assertEqual(self.shared.FILE_PATH.read_bytes(), original)
 
 
 class InterfaceTests(unittest.TestCase):

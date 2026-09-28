@@ -13,7 +13,7 @@ class BatchNumericPatch(CustomAction):
     """
     def run(self, context: Context, argv: CustomAction.RunArg) -> CustomAction.RunResult:
         try:
-            mfaalog.info("[BatchPatch] Engine 启动...")
+            mfaalog.debug("[BatchPatch] Engine 启动...")
 
             # ================= 🔧 开发者配置区域 🔧 =================
             SPLIT_PATTERN = r'[，,;\s|]+'
@@ -31,7 +31,8 @@ class BatchNumericPatch(CustomAction):
                 else:
                     top_params = json.loads(argv.custom_action_param)
             except json.JSONDecodeError:
-                mfaalog.error(f"[BatchPatch] JSON 格式错误: {argv.custom_action_param}")
+                mfaalog.error("[BatchPatch] 批量修改未执行：参数格式错误")
+                mfaalog.debug(f"[BatchPatch] JSON 格式错误: {argv.custom_action_param}")
                 return CustomAction.RunResult(success=True)
 
             # 2. 构建规则队列
@@ -51,9 +52,9 @@ class BatchNumericPatch(CustomAction):
                 if node_obj and node_obj.attach:
                     node_attach_data = node_obj.attach
                 else:
-                    mfaalog.warning(f"[BatchPatch] 未找到节点对象或Attach为空: {current_node_name}")
+                    mfaalog.debug(f"[BatchPatch] 未找到节点对象或Attach为空: {current_node_name}")
             else:
-                mfaalog.warning("[BatchPatch] node_name 未配置，将无法读取 Attach")
+                mfaalog.debug("[BatchPatch] node_name 未配置，将无法读取 Attach")
 
             final_override_dict = {}
 
@@ -62,7 +63,8 @@ class BatchNumericPatch(CustomAction):
                 # [新增] 类型防御：如果 rule 不是字典（比如是字符串或其他乱七八糟的），直接跳过
                 # 这行代码能消除编译器的 "str没有get方法" 警告
                 if not isinstance(rule, dict):
-                    mfaalog.warning(f"[BatchPatch] 规则格式错误（非字典），跳过: {rule}")
+                    mfaalog.warning("[BatchPatch] 一项修改规则格式无效，已跳过")
+                    mfaalog.debug(f"[BatchPatch] 规则格式错误（非字典），跳过: {rule}")
                     continue
 
                 # 下面的代码就安全了，Pylance 知道 rule 肯定是 dict
@@ -82,7 +84,7 @@ class BatchNumericPatch(CustomAction):
                     val = node_attach_data[attach_key]
                     if val is not None:
                         dynamic_input = str(val).strip()
-                        mfaalog.info(f"[BatchPatch] [{rule_tag}] 捕获 Attach 参数: {dynamic_input}")
+                        mfaalog.debug(f"[BatchPatch] [{rule_tag}] 捕获 Attach 参数: {dynamic_input}")
                 
                 raw_input_str = f"{static_input},{dynamic_input}"
                 
@@ -112,10 +114,12 @@ class BatchNumericPatch(CustomAction):
                                     final_number_set.add(i)
                                     
                             else:
-                                mfaalog.warning(f"[BatchPatch] 范围格式无效: '{token}'")
+                                mfaalog.warning("[BatchPatch] 一项编号范围格式无效，已跳过")
+                                mfaalog.debug(f"[BatchPatch] 范围格式无效: '{token}'")
                         except (ValueError, IndexError) as e:
                             # 捕获具体的转换错误，不吞没其他逻辑错误
-                            mfaalog.warning(f"[BatchPatch] 解析范围出错 '{token}': {e}")
+                            mfaalog.warning("[BatchPatch] 一项编号范围无法解析，已跳过")
+                            mfaalog.debug(f"[BatchPatch] 解析范围出错 '{token}': {e}")
 
                     else:
                         try:
@@ -143,14 +147,14 @@ class BatchNumericPatch(CustomAction):
             # 4. 提交
             if final_override_dict:
                 context.override_pipeline(final_override_dict)
-                mfaalog.info(f"[BatchPatch] 执行完毕，注入 {len(final_override_dict)} 个节点")
+                mfaalog.debug(f"[BatchPatch] 执行完毕，注入 {len(final_override_dict)} 个节点")
             
             # [修正] 必须返回 CustomAction.RunResult 对象
             return CustomAction.RunResult(success=True)
 
         except Exception as e:
-            mfaalog.error(f"[BatchPatch] 致命异常: {e}")
+            mfaalog.error("[BatchPatch] 批量修改执行失败")
             import traceback
-            traceback.print_exc()
+            mfaalog.debug(f"[BatchPatch] 致命异常: {e}\n{traceback.format_exc()}")
             # [修正] 即使异常也建议返回 Success=True 防止卡死，或者 False 中断任务
             return CustomAction.RunResult(success=True)

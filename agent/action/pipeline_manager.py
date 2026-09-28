@@ -351,10 +351,10 @@ def _resolve_anchor(context: Context, name: str) -> "str | None":
 
     resolved = context.get_anchor(anchor)
     if not resolved:
-        utils.mfaalog.warning(f"[Py] 🔗 锚点 [{anchor}] 未指向任何节点，跳过该目标")
+        utils.mfaalog.debug(f"[PipelineManager] 🔗 锚点 [{anchor}] 未指向任何节点，跳过该目标")
         return None
 
-    utils.mfaalog.info(f"[Py] 🔗 [Anchor]{anchor} → [{resolved}]")
+    utils.mfaalog.debug(f"[PipelineManager] 🔗 [Anchor]{anchor} → [{resolved}]")
     return resolved
 
 
@@ -419,7 +419,7 @@ def _side_reset_tags(params: dict) -> None:
     tags = raw if isinstance(raw, list) else [raw]
     for tag in tags:
         TAG_STORE[tag] = 0
-    utils.mfaalog.info(f"[Py] 🧹 [旁作用] 计数器已清零: {list(tags)}")
+    utils.mfaalog.debug(f"[PipelineManager] 🧹 [旁作用] 计数器已清零: {list(tags)}")
 
 
 def _side_click(context: Context, argv: CustomAction.RunArg, spec) -> None:
@@ -438,7 +438,7 @@ def _side_click(context: Context, argv: CustomAction.RunArg, spec) -> None:
     else:
         cx, cy = x + w / 2, y + h / 2
     context.tasker.controller.post_click(int(cx), int(cy))
-    utils.mfaalog.info(f"[Py] 🖱️ [旁作用] 点击 ({int(cx)}, {int(cy)})")
+    utils.mfaalog.debug(f"[PipelineManager] 🖱️ [旁作用] 点击 ({int(cx)}, {int(cy)})")
 
 
 # ------------------------------------------------------------------------------
@@ -522,28 +522,29 @@ class PatchPipeline(CustomAction):
                         ledger[node] = restore
                         recorded += 1
                     if skipped:
-                        utils.mfaalog.info(
-                            f"[Py] ℹ️ [{node}] 新增字段无原状可还原，随任务结束自动失效: {skipped}"
+                        utils.mfaalog.debug(
+                            f"[PatchPipeline] ℹ️ [{node}] 新增字段无原状可还原，随任务结束自动失效: {skipped}"
                         )
 
             if patched:
-                utils.mfaalog.info(
-                    f"[Py] 🔧 已改写 {len(patched)} 个节点（登记还原点 {recorded} 个）: "
+                utils.mfaalog.debug(
+                    f"[PatchPipeline] 🔧 已改写 {len(patched)} 个节点（登记还原点 {recorded} 个）: "
                     f"{patched if len(patched) <= 6 else patched[:6] + ['...']}"
                 )
             if created:
-                utils.mfaalog.info(f"[Py] ✨ 新建节点 {len(created)} 个（不进账本）: {created}")
+                utils.mfaalog.debug(f"[PatchPipeline] ✨ 新建节点 {len(created)} 个（不进账本）: {created}")
 
             _side_click(context, argv, params.get("click"))
             return True
 
         except ConfigError as exc:
-            utils.mfaalog.error(f"[Py] ❌ PatchPipeline 配置错误: {exc}")
+            utils.mfaalog.error("[PatchPipeline] 节点参数修改失败：PatchPipeline 配置错误")
+            utils.mfaalog.debug(f"[PatchPipeline] ❌ PatchPipeline 配置错误: {exc}")
             return False
         except Exception as exc:
             import traceback
-            utils.mfaalog.error(f"[Py] 💥 PatchPipeline 运行异常: {exc}")
-            utils.mfaalog.error(traceback.format_exc())
+            utils.mfaalog.error("[PatchPipeline] 节点参数修改失败：PatchPipeline 运行异常")
+            utils.mfaalog.debug(f"[PatchPipeline] 💥 PatchPipeline 运行异常: {exc}\n{traceback.format_exc()}")
             return False
 
 
@@ -566,7 +567,7 @@ class RestorePipeline(CustomAction):
             if spec == "*":
                 targets = list(ledger.keys())
                 if not targets:
-                    utils.mfaalog.info("[Py] 🧹 本次任务没有需要还原的节点")
+                    utils.mfaalog.debug("[RestorePipeline] 🧹 本次任务没有需要还原的节点")
                     _side_click(context, argv, params.get("click"))
                     return True
             else:
@@ -587,18 +588,19 @@ class RestorePipeline(CustomAction):
                 done.append(node)
 
             if done:
-                utils.mfaalog.info(f"[Py] 🔙 已还原 {len(done)} 个节点: {done}")
+                utils.mfaalog.debug(f"[RestorePipeline] 🔙 已还原 {len(done)} 个节点: {done}")
             if missing:
-                utils.mfaalog.warning(f"[Py] ⚠️ 账本中无还原点，已跳过（不算失败）: {missing}")
+                utils.mfaalog.debug(f"[RestorePipeline] ⚠️ 账本中无还原点，已跳过（不算失败）: {missing}")
 
             _side_click(context, argv, params.get("click"))
             return True
 
         except ConfigError as exc:
-            utils.mfaalog.error(f"[Py] ❌ RestorePipeline 配置错误: {exc}")
+            utils.mfaalog.error("[RestorePipeline] 节点参数还原失败：RestorePipeline 配置错误")
+            utils.mfaalog.debug(f"[RestorePipeline] ❌ RestorePipeline 配置错误: {exc}")
             return False
         except Exception as exc:
             import traceback
-            utils.mfaalog.error(f"[Py] 💥 RestorePipeline 运行异常: {exc}")
-            utils.mfaalog.error(traceback.format_exc())
+            utils.mfaalog.error("[RestorePipeline] 节点参数还原失败：RestorePipeline 运行异常")
+            utils.mfaalog.debug(f"[RestorePipeline] 💥 RestorePipeline 运行异常: {exc}\n{traceback.format_exc()}")
             return False

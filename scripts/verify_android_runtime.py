@@ -199,6 +199,7 @@ class AndroidRuntimeTests(unittest.TestCase):
                 archive.write_text('{"market":42}', encoding="utf-8")
                 store = self.isolated_store()
                 store.configure_storage(runtime.StoragePolicy(self.root / "global", portable))
+                self.assertFalse(store.set("account", 1))
                 store.switch_account("0")
                 self.assertTrue(store.set("account", 1))
                 self.assertEqual(store.FILE_PATH.parent, portable)

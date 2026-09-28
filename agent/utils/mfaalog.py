@@ -1,3 +1,19 @@
+# region 日志级别约定（由 scripts/strip_build_comments.py 从构建产物中剥离）
+# 级别       | 普通 UI 中表达什么                         | 示例
+# info       | 用户关心的正常结果、结束或跳过原因          | 已选中某项；本周期已完成
+# warning    | 异常后的替代处理或受限结果                 | 已达尝试上限；已改用默认策略
+# error      | 操作未能完成，或结果无法可靠判断           | 节点修改失败；冷却判定失败
+# debug      | 过程、内部结果和诊断细节                   | 坐标、分数、参数、排序、调用栈
+#
+# info / warning / error 只留简短结果，不要求每个回调都向用户报告成功。
+# 识别的正常命中/未命中、逐轮重试、patch/还原细节统一用 debug。
+# 大量参数、原始数据和完整异常调用栈放 debug；UI 保留对象名称及必要的结果数量。
+# 周期检查保留红绿灯、任务名称、上次运行时间和执行/跳过原因。
+# debug 始终输出：普通模式使用 [DEBUG] 前缀，仅由客户端收进日志文件；
+# 任务开启调试显示时使用 debug: 前缀，同时进入 UI。不要用裸 print 代替 debug。
+# focus 是客户端控制指令，不属于日志级别。
+# endregion
+
 import sys
 import time
 
@@ -36,12 +52,12 @@ def info(msg):
 
 def warning(msg):
     """警告日志"""
-    # 尝试猜测 warning 的前缀，通常是 warn: 或 warning:，如果没有就用 info: [WARN]
+    # 客户端用 warn: 识别警告。
     _print_to_gui("warn:", f"⚠️ >>> {msg}")
 
 def error(msg):
     """错误日志"""
-    # 尝试猜测 error 的前缀
+    # 客户端用 error: 识别错误。
     _print_to_gui("error:", f"🔴 >>> {msg}")
 
 def debug(msg):

@@ -5,8 +5,10 @@ to be present. MFAA's instance file owns the independent switch and user number,
 not the task checkbox; its global options are shared across instances, so an
 injected value is never read there. Android APKs intentionally use account 0.
 Other clients (VS Code MaaSupport keeps global options per task) read the value
-injected into the current task. Business callbacks must synchronize before
-accessing PersistentStore, including cached task decisions.
+injected into the current task. Running from source (dev mode) falls back to
+account 0 when nothing is injected, so a single node can be debugged; release
+packages still block. Business callbacks must synchronize before accessing
+PersistentStore, including cached task decisions.
 """
 from collections import OrderedDict
 import os
@@ -33,12 +35,13 @@ def account_source(android: bool, instance_id: str, client: str) -> str:
 
 class AccountSession:
     def __init__(self, project_root: Path, instance_id: str, *, android=False, injected=False,
-                 client="", store=PersistentStore):
+                 client="", store=PersistentStore, dev_default=False):
         self.project_root = Path(project_root)
         self.instance_id = instance_id
         self.source = "android" if android else "injected" if injected else "mfaa"
         self.client = client
         self.store = store
+        self.dev_default = dev_default and self.source == "injected"
         self._choices = OrderedDict()
         self._reported = set()
         self._lock = RLock()
@@ -56,7 +59,12 @@ class AccountSession:
             node = context.get_node_object(INJECT_NODE)
             if node is None:
                 return AccountSelection(reason=f"缺少节点 {INJECT_NODE}，请更新 base 资源")
-            return parse_injected_account(node.attach)
+            attach = node.attach
+            if self.dev_default and isinstance(attach, dict) and attach.get("account_id") in (None, ""):
+                # e.g. VS Code debugging from a single node, where no account is injected.
+                logger.warning("[Account] 本任务没有下发存档号；源码运行（dev）按 0 号档继续，发布包仍会拦截")
+                return AccountSelection("0")
+            return parse_injected_account(attach)
         return read_instance_account(self.project_root, self.instance_id)
 
     def sync(self, context, where="") -> bool:
@@ -110,15 +118,16 @@ class AccountSession:
 _session = None
 
 
-def configure_account_session(project_root: Path, *, android=False, instance_id=None, client=None):
+def configure_account_session(project_root: Path, *, android=False, dev=False, instance_id=None, client=None):
     global _session
     identity = os.environ.get("MFA_INSTANCE_ID", "").strip() if instance_id is None else instance_id
     client = os.environ.get("PI_CLIENT_NAME", "").strip() if client is None else client
     source = account_source(android, identity, client)
     _session = AccountSession(project_root, identity, android=source == "android",
-                              injected=source == "injected", client=client)
+                              injected=source == "injected", client=client, dev_default=dev)
     PersistentStore.block_account()
-    logger.info(f"[Account] 客户端={client or '-'} 选档来源={_session.source_label}")
+    fallback = "（dev：未下发时用 0 号档）" if _session.dev_default else ""
+    logger.info(f"[Account] 客户端={client or '-'} 选档来源={_session.source_label}{fallback}")
 
 
 def sync_from_context(context, where: str = "") -> bool:

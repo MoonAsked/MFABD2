@@ -6,7 +6,7 @@
 # MaaBD2 - 棕色尘埃2自动化助手
 
 [![Stable Version](https://img.shields.io/github/v/release/sunyink/MFABD2?label=正式版&color=green&logo=github)](https://github.com/sunyink/MFABD2/releases/latest)
-[![Beta Version](https://img.shields.io/github/v/tag/sunyink/MFABD2?include_prereleases&filter=*beta*&label=公测版&color=blue&logo=github)](https://github.com/sunyink/MFABD2/releases?q=beta&expanded=true)
+[![Beta Version](https://img.shields.io/badge/公测版-查看发布-blue?logo=github)](https://github.com/sunyink/MFABD2/releases?q=beta&expanded=true)
 <a href="https://mirrorchyan.com/zh/projects?rid=MFABD2" target="_blank"><img alt="mirrorc" src="https://img.shields.io/badge/Mirror%E9%85%B1-%239af3f6?logo=countingworkspro&logoColor=4f46e5"></a>
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/sunyink/MFABD2/install.yml?label=构建状态&logo=githubactions)](https://github.com/sunyink/MFABD2/actions/workflows/install.yml)
@@ -65,25 +65,12 @@
       <td>
         <b>不断探索边界。</b><br>
         针对现场实况与素材<b>高频迭代</b>，更新粒度以日甚至小时计。强烈欢迎各位“课代表”在此抓虫并提交 Issue。
+        <br><br>
+        目前 <b>PC 客户端（Windows 独立端）适配</b>在公测通道推进——<b>开放加入、人人可试</b>。功能仍在完善，遇到问题欢迎提 Issue，作者会跟进修复。
       </td>
       <td align="center">
         <a href="https://github.com/sunyink/MFABD2/releases?q=beta">
-          <img src="https://img.shields.io/github/v/tag/sunyink/MFABD2?include_prereleases&filter=%2Abeta%2A&label=%E5%85%AC%E6%B5%8B%E7%89%88&color=blue&logo=github" alt="公测版">
-        </a>
-      </td>
-    </tr>
-    <tr>
-      <td align="center">
-        <b>内测版</b><br>
-        <small>版本号含 Alpha</small>
-      </td>
-      <td>
-        <b>新端适配的前沿。</b><br>
-        目前 <b>PC 客户端（Windows 独立端）适配</b>在此通道推进——<b>开放加入、人人可试</b>。功能仍在完善，遇到问题欢迎提 Issue，作者会跟进修复。
-      </td>
-      <td align="center">
-        <a href="https://github.com/sunyink/MFABD2/releases?q=alpha">
-          <img src="https://img.shields.io/github/v/tag/sunyink/MFABD2?include_prereleases&filter=%2Aalpha%2A&label=%E5%86%85%E6%B5%8B%E7%89%88&color=orange&logo=github" alt="内测版">
+          <img src="https://img.shields.io/badge/公测版-查看发布-blue?logo=github" alt="公测版：查看发布">
         </a>
       </td>
     </tr>
@@ -91,6 +78,12 @@
 </table>
 
 </div>
+
+> ⚠️ **切回提示（公测、内测均适用）**：切换更新通道不会自动降级。从公测切回正式版，或从内测切回公测／正式版时，需留意以下区别。
+>
+> **桌面版**：公测、内测的补丁号分别在同一正式版基线上 **+1、+2**，目标版本较低时不会收到更新推送。可先备份配置与存档，手动下载目标通道的完整包并解压到新目录使用。
+>
+> **安卓 APK**：以安装编号（系统判断应用新旧的数字）为准，不只看显示版本或通道。较小编号的包不能直接覆盖安装；如需降级，须卸载后重装，**卸载会清除应用数据，请先备份需要保留的配置与存档**。也可以等待目标通道发布安装编号更高的新包，详见[安卓更新说明](docs/android.md)。
 
 <details>
 <summary>⚡ 五分钟快速上手（新用户看这里）</summary>
@@ -174,13 +167,11 @@
 </details>
 
 <details>
-<summary>PC 客户端（Windows 独立端）使用指引 · 内测中</summary>
+<summary>PC 客户端（Windows 独立端）使用指引 · 公测中</summary>
 
-无需模拟器，直接控制 Windows 上的《棕色尘埃2》PC 客户端（Win32）。目前处于 **内测（Alpha 通道）**：功能仍在适配完善，**开放加入、人人可试**，遇到问题欢迎提 [Issue](https://github.com/sunyink/MFABD2/issues/new/choose)（运行平台请选「PC 客户端」），作者会跟进修复。
+无需模拟器，直接控制 Windows 上的《棕色尘埃2》PC 客户端（Win32）。目前处于 **公测（Beta 通道）**，功能仍在适配完善，具体可用任务以所选版本为准。遇到问题欢迎提 [Issue](https://github.com/sunyink/MFABD2/issues/new/choose)（运行平台请选「PC 客户端」），作者会跟进修复。
 
-获取方式：下载 [内测版（Alpha）发布](https://github.com/sunyink/MFABD2/releases?q=alpha)，或在 Mirror 酱切换到 Alpha 通道。
-
-> ⚠️ **切回提示**：内测版号在正式版基础上 **+2**（公测 +1），以保证各通道更新号单向递增。因此从内测**切回公测/正式版时，更新器会视为"降级"而不推送**——需手动重新下载目标通道，或等下一个正式版号追上后再自动衔接。
+获取方式：查看 [公测版发布](https://github.com/sunyink/MFABD2/releases?q=beta)中的适配说明，或在 Mirror 酱选择公测通道。
 
 PC 客户端适配由 [@BebopSpikeSpiegel](https://github.com/BebopSpikeSpiegel) 主力推进，感谢贡献。
 
@@ -273,7 +264,7 @@ PC 客户端适配由 [@BebopSpikeSpiegel](https://github.com/BebopSpikeSpiegel)
 | [MaaPipelineEditor](https://github.com/kqcoxn/MaaPipelineEditor) | 可视化工具 |
 | **京墨** | 跑商功能初始代码 ([7e5bb2a](https://github.com/sunyink/MFABD2/commit/7e5bb2abed984f6fd3cc254605f00e3b924cd982))，感谢付出与支持 |
 | [@XiaoXKKK](https://github.com/XiaoXKKK) | 接管钓鱼初始代码 ([adb06bb](https://github.com/sunyink/MFABD2/commit/adb06bbb50f4be4150ca5b64119629af688ac8f9))，感谢付出与支持 |
-| [@BebopSpikeSpiegel](https://github.com/BebopSpikeSpiegel) | PC 客户端（Windows 独立端）适配主力推进，内测通道核心贡献 |
+| [@BebopSpikeSpiegel](https://github.com/BebopSpikeSpiegel) | PC 客户端（Windows 独立端）适配主力推进 |
 | [@KoujiMinamoto](https://github.com/KoujiMinamoto) | PlayCover(iOS/macOS) 控制器支持与维护，让 Mac 免模拟器运行 |
 | [JZPPP/MaaBD2](https://github.com/JZPPP/MaaBD2) | 早期参考项目 |
 
