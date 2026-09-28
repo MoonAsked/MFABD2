@@ -78,8 +78,10 @@ class NativeAPI:
         self.scans += 1
         return self.frames.pop(0) if len(self.frames) > 1 else self.frames[0]
 
-    def launch(self):
+    def launch(self, *, check):
+        check()
         self.launches += 1
+        return SimpleNamespace(diagnostics=("选择唯一有效安装 10000002",))
 
     def is_game(self, hwnd):
         self.handles.append(hwnd)
@@ -346,6 +348,27 @@ class PCTests(ContractTest):
         self.assertEqual(api.launches, 0)
         self.assertEqual(api.scans, 3)
         self.assertTrue(any("ERROR" in text for text in self.messages))
+        self.assertEqual(sum("本轮不发送启动请求" in text for text in self.messages), 1)
+
+    def test_existing_process_can_disappear_before_the_only_launch(self):
+        api = NativeAPI([([], True, []), ([], False, []), ([7], True, [])])
+        self.assertTrue(pc.prepare(api, self.budget()).changed)
+        self.assertEqual(api.launches, 1)
+        self.assertEqual(sum("本轮不发送启动请求" in text for text in self.messages), 1)
+        self.assertTrue(any("选择唯一有效安装 10000002" in text for text in self.messages))
+
+    def test_failed_discovery_is_not_retried(self):
+        api = NativeAPI([([], False, [])])
+        attempts = []
+        def fail(*, check):
+            check()
+            attempts.append(True)
+            raise PreparationError("安装记录读取不完整")
+        api.launch = fail
+        with self.assertRaisesRegex(PreparationError, "读取不完整"):
+            pc.prepare(api, self.budget())
+        self.assertEqual(attempts, [True])
+        self.assertFalse(any("已调用官方启动器" in text for text in self.messages))
 
     def test_existing_verified_window_is_accepted_immediately(self):
         api = NativeAPI()

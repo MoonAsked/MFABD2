@@ -216,6 +216,7 @@ def launch_and_confirm(api, budget):
     里，是因为 pretask 跑在独立进程中，等它多久都不会阻塞 pipeline。
     """
     launched = False
+    reported_existing = False
     last_dialogs = None
     while True:
         budget.check()
@@ -238,9 +239,18 @@ def launch_and_confirm(api, budget):
             if dialogs:
                 budget.report(f"[启动准备] 启动器窗口：{', '.join(dialogs)}；继续观察，不自动点击弹框")
             last_dialogs = dialogs
+        if running and not launched and not reported_existing:
+            budget.report(
+                "[启动准备] 已有游戏或启动器在运行，本轮不发送启动请求；"
+                "若启动器持续停在安装页或报错且无法自行完成，手动关闭启动器后重试")
+            reported_existing = True
         if not running and not launched:
-            api.launch()
+            budget.phase = "读取已安装游戏记录"
+            budget.report("[启动准备] 正在读取当前 Windows 用户的已安装游戏记录")
+            result = api.launch(check=budget.check)
             launched = True
+            for message in result.diagnostics:
+                budget.report(f"[启动准备] {message}")
             budget.report("[启动准备] 已调用官方启动器")
         budget.phase = "等待启动器更新并交接游戏主窗口"
         budget.pause(2)

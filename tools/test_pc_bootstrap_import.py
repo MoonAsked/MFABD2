@@ -35,6 +35,14 @@ script = Path(sys.argv[1]).resolve()
 assert str(script.parent) not in sys.path
 runpy.run_path(str(script), run_name='bootstrap_import_test')
 import startup.common
+import importlib.abc
+class BlockWindows(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname in ('winreg', 'ctypes', 'startup.win32', 'maa'):
+            raise AssertionError('Unexpected native import: ' + fullname)
+sys.meta_path.insert(0, BlockWindows())
+sys.platform = 'linux'
+import startup.pc_install
 assert Path(startup.common.__file__).resolve() == script.parent / 'startup/common.py'
 assert 'startup.win32' not in sys.modules
 assert 'utils.host_watchdog' not in sys.modules
@@ -96,6 +104,8 @@ if sys.platform == 'win32':
     text = (workspace / 'debug' / 'pc_bootstrap.log').read_text(encoding='utf-8')
     assert 'boom' in text, text
     assert '不阻断任务队列' in text, text
+    import os
+    assert f'pid={os.getpid()}' in text, text
 print('ok')
 """
         with tempfile.TemporaryDirectory() as directory:

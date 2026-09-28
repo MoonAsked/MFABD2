@@ -93,7 +93,7 @@ def main():
     logger = logging.getLogger("pc_bootstrap")
     logger.setLevel(logging.INFO)
     handler = RotatingFileHandler(log_dir / "pc_bootstrap.log", maxBytes=1024 * 1024, backupCount=2, encoding="utf-8")
-    handler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
+    handler.setFormatter(logging.Formatter("%(asctime)s pid=%(process)d %(message)s"))
     logger.addHandler(handler)
 
     def report(message):

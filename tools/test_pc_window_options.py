@@ -74,8 +74,10 @@ class FakeAPI:
     def scan(self):
         return ([], False, [])
 
-    def launch(self):
+    def launch(self, *, check):
+        check()
         self.calls.append(('launch',))
+        return types.SimpleNamespace(diagnostics=())
 
     def client_size(self, hwnd):
         size = (0, 0) if self.iconic else self.size

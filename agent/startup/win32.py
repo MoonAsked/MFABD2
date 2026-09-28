@@ -6,13 +6,12 @@ import os
 import re
 from ctypes import wintypes as W
 
-from .common import PreparationError
+from .common import Cancelled, PreparationError
 
 GAME_EXE = "browndust ii.exe"
 STARTER_EXE = "browndust2starter.exe"
 GAME_CLASS = "UnityWndClass"
 GAME_TITLE = "BrownDust II"
-GAME_URI = "browndust2:games/10000001?usn=0"
 
 
 class ProcessEntry(C.Structure):
@@ -143,19 +142,38 @@ class WindowsAPI:
         running = any(exe in (GAME_EXE, STARTER_EXE) for exe in processes.values())
         return games, running, tuple(sorted(set(dialogs)))
 
-    def launch(self):
+    def launch(self, *, check):
         import winreg
+        from .pc_install import discover_installations, file_issue, select_installation
 
+        selected = select_installation(discover_installations(check=check))
+        phase = "校验官方启动入口"
         try:
-            with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"browndust2\shell\open\command") as key:
-                command = winreg.QueryValueEx(key, "")[0]
-        except OSError as exc:
-            raise PreparationError("未找到官方 browndust2 启动入口，请先安装 PC 独立版并手动启动一次") from exc
-        match = re.match(r'^\s*(?:"([^"]+)"|(\S+))', os.path.expandvars(command))
-        executable = next((part for part in match.groups() if part), "") if match else ""
-        if ntpath.basename(executable).lower() != STARTER_EXE or not os.path.isfile(executable):
-            raise PreparationError("官方启动器注册路径无效，请修复 PC 独立版安装")
-        os.startfile(GAME_URI)
+            check()
+            with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"browndust2\shell\open\command",
+                                0, winreg.KEY_QUERY_VALUE) as key:
+                command, kind = winreg.QueryValueEx(key, "")
+            check()
+            if kind not in (winreg.REG_SZ, winreg.REG_EXPAND_SZ) or not isinstance(command, str):
+                raise PreparationError("官方启动器注册命令不是字符串")
+            match = re.match(r'^\s*(?:"([^"]+)"|(\S+))', os.path.expandvars(command))
+            executable = next((part for part in match.groups() if part), "") if match else ""
+            if ntpath.basename(executable).lower() != STARTER_EXE or file_issue(executable):
+                raise PreparationError("官方启动器注册路径无效，请修复 PC 独立版安装")
+            phase = "启动前复核游戏文件"
+            check()
+            issue = file_issue(selected.installation.path)
+            if issue:
+                raise PreparationError(issue)
+            phase = "提交官方启动请求"
+            check()
+            os.startfile(selected.uri)
+        except Cancelled:
+            raise
+        except (OSError, PreparationError) as exc:
+            raise PreparationError("；".join([
+                f"{phase}失败", *selected.diagnostics, str(exc) or type(exc).__name__])) from exc
+        return selected
 
     def restore(self, hwnd):
         # 伪最小化（框架的后台截图机制）状态下，窗口按定义就不是 iconic —— 上游文档
