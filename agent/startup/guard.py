@@ -27,8 +27,7 @@ class StartupGuard:
 
     @staticmethod
     def _pc_prepare(controller, info, budget, options):
-        # 签名保持四参：它是 pc_prepare 的注入契约，多处测试按四参断言。controller
-        # 本身自 post_inactive 救援删除后就不再需要（见下），显式 del 表明这是有意的。
+        # controller 保留在注入契约中；窗口准备本身只使用原生窗口接口。
         del controller
         from .pc import prepare
         from .win32 import WindowsAPI
@@ -38,10 +37,9 @@ class StartupGuard:
             hwnd = int(hwnd, 0)
         if not isinstance(hwnd, int) or not hwnd:
             raise PreparationError("Win32 控制器未提供有效的窗口句柄")
-        # 这里曾用 post_inactive() 试图让框架「恢复它保存的扩展样式」，那是误解：
-        # post_inactive 的语义是「恢复窗口位置（取消置顶）并解除输入阻断」，完全不碰
-        # layered/alpha。于是救援空转、随后必然二次报错。伪最小化是框架自己的后台截图
-        # 机制，既不需要也无法主动退出——详见 pc.align_window 里的说明。别再加回来。
+        # MaaFw 5.12.3 的 post_inactive() 确实会撤销当前截图控制器的伪最小化。
+        # 但多个控制器可能把彼此制造的透明状态保存成原始状态，inactive 也会恢复成
+        # 透明。应避免重复截图控制器，不能在每个任务中靠 inactive 掩盖该生命周期问题。
         with WindowsAPI() as api:
             return prepare(api, budget, hwnd=hwnd, options=options)
 

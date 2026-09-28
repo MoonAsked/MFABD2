@@ -131,9 +131,9 @@ def align_window(api, hwnd, budget, options):
     if not options.minimize and api.pseudo_minimized(hwnd):
         # 伪最小化是 MaaFramework 自己的后台截图机制：FramePool / PrintWindow 在窗口被
         # 最小化时把它设为透明并开启点击穿透，以不激活的方式恢复，从而继续截图；框架的
-        # monitor 线程会持续 apply/revert。它对截图与输入都完全正常，既不是故障，也没有
-        # 任何公开 API 能令其回退（post_inactive 只管取消置顶与解除输入阻断）。
-        # 所以这里只报告状态，绝不报错——把它当故障曾让整个任务队列全灭。
+        # monitor 线程在用户激活窗口时恢复属性，post_inactive 也会恢复当前控制器的状态。
+        # 多控制器可能保存到 alpha=0 的错误原始状态，导致恢复后仍透明；不能仅凭这里
+        # 的透明标志区分正常后台截图和该故障。保持任务可用，连接层应共用截图控制器。
         mode = (
             "窗口当前处于框架的后台截图模式（透明并点击穿透，这是 MaaFramework 自身机制，"
             "不影响识别）；点任务栏中的游戏即可恢复查看"
