@@ -1,4 +1,4 @@
-"""只读回放 RedDotDetector_samples 的台账(samples.jsonl.log，兼容旧名 samples.jsonl)。
+"""只读回放 RedDotDetector_samples 的台账(custom.log.samples.jsonl.log，兼容两代旧名)。
 
 运行示例（从仓库根目录）：
     python agent/recognition/replay_rdd_samples.py assets/debug/RedDotDetector_samples
@@ -40,7 +40,7 @@ from recognition.rdd_sampler import MANIFEST_NAMES  # noqa: E402
 
 
 def _load_entries(sample_dir):
-    """读齐目录内所有台账。旧名在前(产生更早)，同目录两名并存时合并而非二选一。"""
+    """读齐目录内所有台账。旧名在前(产生更早)，新旧名称并存时合并而非二选一。"""
     entries, used = [], []
     for name in reversed(MANIFEST_NAMES):
         path = os.path.join(sample_dir, name)

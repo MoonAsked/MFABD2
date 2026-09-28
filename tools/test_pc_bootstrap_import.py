@@ -67,17 +67,19 @@ from pathlib import Path
 script, workspace = Path(sys.argv[1]).resolve(), Path(sys.argv[2]).resolve()
 mod = runpy.run_path(str(script), run_name='bootstrap_import_test')
 # run_name 不是 __main__，所以导入期绝不能落盘，否则纯 import 测试会污染仓库。
-assert not (workspace / 'pc_bootstrap.log').exists()
+assert not (workspace / 'debug').exists()
 boot = mod['_boot_log']
 boot.__globals__['AGENT_DIR'] = workspace / 'agent'
-assert boot(workspace, note='probe') == workspace
-text = (workspace / 'pc_bootstrap.log').read_text(encoding='utf-8')
+log_dir = workspace / 'debug' / 'pc_bootstrap'
+assert boot(note='probe') == log_dir
+text = (log_dir / 'custom.log.pc_bootstrap.log').read_text(encoding='utf-8')
 for marker in ('[boot]', 'cwd=', 'argv=', 'exe=', 'file=', 'note=probe'):
     assert marker in text, marker
-# 首选目录不可写时退到 AGENT_DIR/../debug，并且绝不抛异常。
+# 首选目录不可写时退到模块目录，并且绝不抛异常。
 blocked = workspace / 'blocked'
 blocked.write_text('not a directory', encoding='utf-8')
-assert boot(blocked) == workspace / 'debug'
+assert boot(blocked) == log_dir
+assert not (workspace / 'debug' / 'pc_bootstrap.log').exists()
 print('ok')
 """
         with tempfile.TemporaryDirectory() as directory:
@@ -94,6 +96,7 @@ script, workspace = Path(sys.argv[1]).resolve(), Path(sys.argv[2]).resolve()
 mod = runpy.run_path(str(script), run_name='bootstrap_import_test')
 globals_ = mod['_boot_log'].__globals__
 globals_['AGENT_DIR'] = workspace / 'agent'
+globals_['_boot_log'](note='before-main')
 
 def boom(report):
     raise RuntimeError('boom')
@@ -101,11 +104,71 @@ def boom(report):
 globals_['_run'] = boom
 globals_['main']()
 if sys.platform == 'win32':
-    text = (workspace / 'debug' / 'pc_bootstrap.log').read_text(encoding='utf-8')
+    text = (workspace / 'debug' / 'pc_bootstrap' / 'custom.log.pc_bootstrap.log').read_text(encoding='utf-8')
+    assert 'note=before-main' in text, text
     assert 'boom' in text, text
     assert '不阻断任务队列' in text, text
     import os
     assert f'pid={os.getpid()}' in text, text
+print('ok')
+"""
+        with tempfile.TemporaryDirectory() as directory:
+            result = isolated(code, self.script, directory)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_boot_log_falls_back_to_temp_module_directory(self):
+        code = """
+import os
+import runpy
+import sys
+from pathlib import Path
+script, workspace = Path(sys.argv[1]).resolve(), Path(sys.argv[2]).resolve()
+mod = runpy.run_path(str(script), run_name='bootstrap_import_test')
+boot = mod['_boot_log']
+boot.__globals__['AGENT_DIR'] = workspace / 'agent'
+(workspace / 'debug').write_text('blocked', encoding='utf-8')
+os.environ['TEMP'] = str(workspace / 'temp')
+fallback = workspace / 'temp' / 'MFABD2' / 'pc_bootstrap'
+assert boot(note='fallback') == fallback
+assert 'note=fallback' in (fallback / 'custom.log.pc_bootstrap.log').read_text(encoding='utf-8')
+assert not (workspace / 'temp' / 'pc_bootstrap.log').exists()
+# 所有目录不可写时保留原来的不抛异常约定。
+os.environ['TEMP'] = str(workspace / 'debug')
+assert boot() is None
+print('ok')
+"""
+        with tempfile.TemporaryDirectory() as directory:
+            result = isolated(code, self.script, directory)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    @unittest.skipUnless(sys.platform == 'win32', 'PC bootstrap runs on Windows')
+    def test_rotated_logs_stay_in_module_directory_and_match_export_prefix(self):
+        code = """
+import logging.handlers
+import runpy
+import sys
+from pathlib import Path
+from unittest.mock import patch
+script, workspace = Path(sys.argv[1]).resolve(), Path(sys.argv[2]).resolve()
+mod = runpy.run_path(str(script), run_name='bootstrap_import_test')
+globals_ = mod['_boot_log'].__globals__
+globals_['AGENT_DIR'] = workspace / 'agent'
+globals_['_run'] = lambda report: [report('rotation-probe-' + str(i) + '-' * 200) for i in range(5)]
+handler_type = logging.handlers.RotatingFileHandler
+def small_handler(*args, **kwargs):
+    kwargs['maxBytes'] = 300
+    return handler_type(*args, **kwargs)
+with patch.object(logging.handlers, 'RotatingFileHandler', small_handler):
+    globals_['main']()
+directory = workspace / 'debug' / 'pc_bootstrap'
+files = sorted(directory.iterdir())
+assert [p.name for p in files] == [
+    'custom.log.pc_bootstrap.log',
+    'custom.log.pc_bootstrap.log.1',
+    'custom.log.pc_bootstrap.log.2',
+], files
+assert all('rotation-probe-' in p.read_text(encoding='utf-8') for p in files)
+assert not list((workspace / 'debug').glob('*.log'))
 print('ok')
 """
         with tempfile.TemporaryDirectory() as directory:

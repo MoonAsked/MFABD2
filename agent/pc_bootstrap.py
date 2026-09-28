@@ -16,6 +16,12 @@ import time
 from pathlib import Path
 
 AGENT_DIR = Path(__file__).resolve().parent
+# MFAA's custom-log export matches this filename prefix recursively.
+LOG_NAME = "custom.log.pc_bootstrap.log"
+
+
+def _log_directory():
+    return AGENT_DIR.parent / "debug" / "pc_bootstrap"
 
 
 def _boot_log(directory=None, note=""):
@@ -25,8 +31,8 @@ def _boot_log(directory=None, note=""):
     进程根本没起来，还是起来了但 import 阶段就死了。有这一行就能一刀切开，
     并且直接读出上层软件给的工作目录到底是哪个。
 
-    自身绝不抛异常、绝不影响启动：debug 目录不可写（例如装在 Program Files）
-    时退到 %TEMP%，全部候选都失败就静默放弃。
+    自身绝不抛异常、绝不影响启动：debug/pc_bootstrap 不可写时退到
+    %TEMP%/MFABD2/pc_bootstrap，全部候选都失败就静默放弃。
     """
     line = (
         f"{time.strftime('%Y-%m-%d %H:%M:%S')} [boot] pid={os.getpid()} "
@@ -34,13 +40,13 @@ def _boot_log(directory=None, note=""):
         + (f" note={note}" if note else "")
         + "\n"
     )
-    for target in (directory, AGENT_DIR.parent / "debug", Path(os.environ.get("TEMP", "."))):
+    for target in (directory, _log_directory(), Path(os.environ.get("TEMP", ".")) / "MFABD2" / "pc_bootstrap"):
         if target is None:
             continue
         try:
             path = Path(target)
             path.mkdir(parents=True, exist_ok=True)
-            with open(path / "pc_bootstrap.log", "a", encoding="utf-8") as handle:
+            with open(path / LOG_NAME, "a", encoding="utf-8") as handle:
                 handle.write(line)
             return path
         except Exception:
@@ -88,11 +94,11 @@ def main():
     import logging
     from logging.handlers import RotatingFileHandler
 
-    log_dir = AGENT_DIR.parent / "debug"
+    log_dir = _log_directory()
     log_dir.mkdir(parents=True, exist_ok=True)
     logger = logging.getLogger("pc_bootstrap")
     logger.setLevel(logging.INFO)
-    handler = RotatingFileHandler(log_dir / "pc_bootstrap.log", maxBytes=1024 * 1024, backupCount=2, encoding="utf-8")
+    handler = RotatingFileHandler(log_dir / LOG_NAME, maxBytes=1024 * 1024, backupCount=2, encoding="utf-8")
     handler.setFormatter(logging.Formatter("%(asctime)s pid=%(process)d %(message)s"))
     logger.addHandler(handler)
 
