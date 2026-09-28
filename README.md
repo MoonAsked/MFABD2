@@ -6,7 +6,7 @@
 # MaaBD2 - 棕色尘埃2自动化助手
 
 [![Stable Version](https://img.shields.io/github/v/release/sunyink/MFABD2?label=正式版&color=green&logo=github)](https://github.com/sunyink/MFABD2/releases/latest)
-[![Beta Version](https://img.shields.io/badge/公测版-查看发布-blue?logo=github)](https://github.com/sunyink/MFABD2/releases?q=beta&expanded=true)
+[![Beta Version](https://img.shields.io/github/v/release/sunyink/MFABD2?include_prereleases&sort=semver&filter=v*-beta.*&label=公测版&color=blue&logo=github)](https://github.com/sunyink/MFABD2/releases?q=beta&expanded=true)
 <a href="https://mirrorchyan.com/zh/projects?rid=MFABD2" target="_blank"><img alt="mirrorc" src="https://img.shields.io/badge/Mirror%E9%85%B1-%239af3f6?logo=countingworkspro&logoColor=4f46e5"></a>
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/sunyink/MFABD2/install.yml?label=构建状态&logo=githubactions)](https://github.com/sunyink/MFABD2/actions/workflows/install.yml)
@@ -70,7 +70,7 @@
       </td>
       <td align="center">
         <a href="https://github.com/sunyink/MFABD2/releases?q=beta">
-          <img src="https://img.shields.io/badge/公测版-查看发布-blue?logo=github" alt="公测版：查看发布">
+          <img src="https://img.shields.io/github/v/release/sunyink/MFABD2?include_prereleases&sort=semver&filter=v%2A-beta.%2A&label=%E5%85%AC%E6%B5%8B%E7%89%88&color=blue&logo=github" alt="公测版">
         </a>
       </td>
     </tr>
