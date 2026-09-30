@@ -46,6 +46,7 @@
         "next": [
             "StartGame_Update_Data_DownLoading",
             "[JumpBack]StartGame_PayFailed",
+            "StartGame_Loading",
             "StartGame_TouchStart"
         ]
     },
