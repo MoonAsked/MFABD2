@@ -10,6 +10,9 @@
         "action": "Shell",
         "cmd": "dumpsys window | grep mCurrentFocus | grep com.neowizgames.game.browndust2",
         "next": [
+            "StartGame_Update_Data",
+            "StartGame_Update_Data_DownLoading",
+            "StartGame_Loading",
             "StartGame_TouchStart",
             "Global_ToHomePage_Enter",
             "Global_ToSandBox_Enter",
@@ -281,6 +284,7 @@
         "post_delay": 30000,
         "next": [
             "StartGame_Update_Data_DownLoading",
+            "StartGame_Loading",
             "StartGame_TouchStart"
         ],
         "on_error": [
@@ -305,11 +309,12 @@
         "next": [
             "[JumpBack]StartGame_Update_Data_DownLoading",
             "[JumpBack]StartGame_PayFailed",
+            "StartGame_Loading",
             "StartGame_TouchStart",
             "StartGame_GameIsMaint"
         ],
         "on_error": [
-            "StartGame_UpdateCloseGame"
+            "StartGame_LoadingPage"
         ],
         "focus": "SM.数据下载循环"
     },
