@@ -259,6 +259,34 @@
             "description": "每周执行：访问<code>街机页面</code>、在<code>我的小屋</code>对随机访客点赞4次、打1轮<code>末日之书</code>、<code>钓鱼</code>1条。<br>周期触发器已实装，同周期内不会重复执行。"
         },
         {
+            "name": "[执行]偷窃周常(测试)",
+            "entry": "Steal_Start",
+            "controller": [
+                "PC客户端",
+                "PC客户端(Cursor)"
+            ],
+            "description": "<b>偷窃周常：剧情卡1–8，共13名NPC，每名检查三个角色。</b><br>从剧情自由场景或大厅启动，自动切卡、前往固定起点并核对NPC姓名；三个角色均出现周冷却后才记为完成。<br>默认跳过本周已完成的NPC，可在任务设置中关闭；单名失败会保留未完成状态并继续其他目标。「二次尝试」使用相同名单与周记录跳过开关。<br>每周一08:00（北京时间）刷新。已完成13条路线实机验证，支持Windows PC客户端，建议使用PC客户端(Cursor)。",
+            "label": "[执行]偷窃周常",
+            "option": [
+                "偷窃-跳过本周完成记录"
+            ],
+            "default_check": false
+        },
+        {
+            "name": "[执行]偷窃周常(二次尝试)",
+            "entry": "Steal_Start2",
+            "controller": [
+                "PC客户端",
+                "PC客户端(Cursor)"
+            ],
+            "description": "<b>偷窃周常：剧情卡1–8，共13名NPC，每名检查三个角色。</b><br>从剧情自由场景或大厅启动，自动切卡、前往固定起点并核对NPC姓名；三个角色均出现周冷却后才记为完成。<br>默认跳过本周已完成的NPC，可在任务设置中关闭；单名失败会保留未完成状态并继续其他目标。「二次尝试」使用相同名单与周记录跳过开关。<br>每周一08:00（北京时间）刷新。已完成13条路线实机验证，支持Windows PC客户端，建议使用PC客户端(Cursor)。",
+            "label": "[执行]偷窃周常(二次尝试)",
+            "option": [
+                "偷窃-跳过本周完成记录"
+            ],
+            "default_check": false
+        },
+        {
             "name": "[领取]日常任务",
             "default_check": true,
             "entry": "Daily_HomePage",
@@ -8041,6 +8069,44 @@
                         "Agt_MultiSave_Inject": {
                             "attach": {
                                 "account_id": "0"
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        "偷窃-跳过本周完成记录": {
+            "label": "跳过本周已完成 NPC",
+            "type": "switch",
+            "default_case": "Yes",
+            "description": "开启：按当前账号的周完成记录，跳过本周已确认完成的 NPC。<br>关闭：忽略周记录跳过，重新前往并逐角色核验；游戏内已冷却的角色仍会跳过，三个角色均确认后记录完成。<br>每周一 08:00（北京时间）刷新。",
+            "cases": [
+                {
+                    "name": "Yes",
+                    "pipeline_override": {
+                        "Steal_Start": {
+                            "custom_action_param": {
+                                "skip_completed": true
+                            }
+                        },
+                        "Steal_Start2": {
+                            "custom_action_param": {
+                                "skip_completed": true
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "No",
+                    "pipeline_override": {
+                        "Steal_Start": {
+                            "custom_action_param": {
+                                "skip_completed": false
+                            }
+                        },
+                        "Steal_Start2": {
+                            "custom_action_param": {
+                                "skip_completed": false
                             }
                         }
                     }
